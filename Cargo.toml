@@ -1,0 +1,19 @@
+[package]
+edition = "2021"
+name = "moveref"
+version = "0.0.0"
+authors = ["silvanshade <silvanshade@users.noreply.github.com>"]
+license = "Apache-2.0 WITH LLVM-exception"
+repository = "https://github.com/silvanshade/moveref"
+description = "Types and traits for C++ style placement allocation and move semantics"
+
+[features]
+alloc = []
+std = ["alloc", "tracing/std"]
+debug = ["tracing"]
+default = ["std", "cxx"]
+cxx = ["cxx/c++20"]
+
+[dependencies]
+cxx = { version = "1.0", optional = true }
+tracing = { version = "0.1", optional = true, features = ["attributes"] }

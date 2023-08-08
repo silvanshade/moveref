@@ -19,7 +19,7 @@ macro_rules! bind {
         $crate::bind!(@emplace $name, $($ty)?, $expr);
     };
     (@move $(($mut:tt))? $name:ident, $($ty:ty)?, $expr:expr) => {
-        bind_slot!(#[dropping] slot);
+        $crate::bind_slot!(#[dropping] slot);
         #[allow(unused_mut)]
         let $($mut)? $name $(: $ty)? = $crate::DerefMove::deref_move($expr, slot);
     };

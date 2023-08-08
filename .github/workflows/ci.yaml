@@ -1,0 +1,138 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_NIGHTLY_TOOLCHAIN: nightly-2023-08-07
+
+jobs:
+  cargo-deny:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        checks:
+          - advisories
+          - bans licenses sources
+    continue-on-error: ${{ matrix.checks == 'advisories' }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          command: check ${{ matrix.checks }}
+
+  cargo-fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          components: rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} fmt --all -- --check
+
+  cargo-clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - uses: giraffate/clippy-action@v1
+        with:
+          reporter: "github-pr-review"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          clippy_flags: -- -D warnings
+
+  cargo-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test
+
+  cargo-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v2
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo doc --no-deps --package moveref
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/doc
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+  cargo-test-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+      - run: |
+          mkdir -p .github/caching
+          cargo search cargo-tarpaulin | awk '/^cargo-tarpaulin/{gsub(/"/,"",$3); print $3}' > .github/caching/cargo-tarpaulin.lock
+      - id: cache-cargo-tarpaulin
+        uses: actions/cache@v3
+        with:
+          path: ${{ runner.tool_cache }}/cargo-tarpaulin/bin
+          key: cargo-tarpaulin-bin-${{ hashFiles('.github/caching/cargo-tarpaulin.lock') }}
+      - if: "steps.cache-cargo-tarpaulin.outputs.cache-hit != 'true'"
+        run: cargo install --root ${{ runner.tool_cache }}/cargo-tarpaulin --force cargo-tarpaulin
+      - run: echo "${{ runner.tool_cache }}/cargo-tarpaulin/bin" >> $GITHUB_PATH
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} tarpaulin --verbose --workspace --timeout 120 --out Xml
+      - uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
+
+  cargo-miri:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          components: miri
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} miri test
+
+  cargo-valgrind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - run: |
+          mkdir -p .github/caching
+          cargo search cargo-valgrind | awk '/^cargo-valgrind/{gsub(/"/,"",$3); print $3}' > .github/caching/cargo-valgrind.lock
+      - id: cache-cargo-valgrind
+        uses: actions/cache@v3
+        with:
+          path: ${{ runner.tool_cache }}/cargo-valgrind/bin
+          key: cargo-valgrind-bin-${{ hashFiles('.github/caching/cargo-valgrind.lock') }}
+      - if: "steps.cache-cargo-valgrind.outputs.cache-hit != 'true'"
+        run: cargo install --root ${{ runner.tool_cache }}/cargo-valgrind --force cargo-valgrind
+      - run: echo "${{ runner.tool_cache }}/cargo-valgrind/bin" >> $GITHUB_PATH
+      - uses: Swatinem/rust-cache@v2
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: valgrind
+          version: 1.0
+      - run: cargo valgrind test --features valgrind

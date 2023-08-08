@@ -13,6 +13,7 @@ std = ["alloc", "tracing/std"]
 debug = ["tracing"]
 default = ["std", "cxx"]
 cxx = ["cxx/c++20"]
+valgrind = []
 
 [dependencies]
 cxx = { version = "1.0", optional = true }

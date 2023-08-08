@@ -118,7 +118,8 @@ mod test {
         core::mem::forget(expr!(&move 42));
     }
 
-    #[cfg(feature = "alloc")]
+    #[cfg_attr(miri, ignore)]
+    #[cfg(all(feature = "alloc", not(feature = "valgrind")))]
     #[test]
     #[should_panic]
     fn forget_deref_moved_box() {

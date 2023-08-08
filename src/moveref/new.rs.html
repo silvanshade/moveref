@@ -145,8 +145,6 @@
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{into_move::IntoMove, move_ref::MoveRef};
 <span class="kw">use </span>core::{mem::MaybeUninit, pin::Pin};
 
@@ -188,7 +186,6 @@
     <span class="doccomment">/// # Safety
     ///
     /// - the same safety requirements as [`New::new()`] apply with respect to `dst`
-    /// - `src` must remain in a valid state, and must be unmodified with respect to its data
     </span><span class="kw">unsafe fn </span>copy_new(src: <span class="kw-2">&amp;</span><span class="self">Self</span>, dst: Pin&lt;<span class="kw-2">&amp;mut </span>MaybeUninit&lt;<span class="self">Self</span>&gt;&gt;);
 }
 
@@ -196,7 +193,6 @@
     <span class="doccomment">/// # Safety
     ///
     /// - the same safety requirements as [`New::new()`] apply with respect to `dst`
-    /// - `src` must remain in a valid state, but may be modified with respect to its data
     </span><span class="kw">unsafe fn </span>move_new(src: Pin&lt;MoveRef&lt;<span class="self">Self</span>&gt;&gt;, dst: Pin&lt;<span class="kw-2">&amp;mut </span>MaybeUninit&lt;<span class="self">Self</span>&gt;&gt;);
 }
 

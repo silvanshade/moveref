@@ -39,7 +39,6 @@ pub trait CopyNew: Sized {
     /// # Safety
     ///
     /// - the same safety requirements as [`New::new()`] apply with respect to `dst`
-    /// - `src` must remain in a valid state, and must be unmodified with respect to its data
     unsafe fn copy_new(src: &Self, dst: Pin<&mut MaybeUninit<Self>>);
 }
 
@@ -47,7 +46,6 @@ pub trait MoveNew: Sized {
     /// # Safety
     ///
     /// - the same safety requirements as [`New::new()`] apply with respect to `dst`
-    /// - `src` must remain in a valid state, but may be modified with respect to its data
     unsafe fn move_new(src: Pin<MoveRef<Self>>, dst: Pin<&mut MaybeUninit<Self>>);
 }
 

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["by","by_raw","default","mov","of"],"trait":["CopyNew","MoveNew","New","TryNew"]};

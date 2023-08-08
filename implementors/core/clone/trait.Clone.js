@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"moveref":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.71.1/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"enum\" href=\"moveref/enum.SlotStorageKind.html\" title=\"enum moveref::SlotStorageKind\">SlotStorageKind</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

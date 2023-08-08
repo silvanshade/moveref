@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"moveref":[["impl&lt;T: ?<a class=\"trait\" href=\"https://doc.rust-lang.org/1.71.1/core/marker/trait.Sized.html\" title=\"trait core::marker::Sized\">Sized</a>&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.71.1/core/ops/deref/trait.DerefMut.html\" title=\"trait core::ops::deref::DerefMut\">DerefMut</a> for <a class=\"struct\" href=\"moveref/struct.MoveRef.html\" title=\"struct moveref::MoveRef\">MoveRef</a>&lt;'_, T&gt;"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

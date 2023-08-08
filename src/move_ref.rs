@@ -65,12 +65,12 @@ impl<'frame, T> MoveRef<'frame, T> {
     }
 
     #[inline]
-    pub unsafe fn as_ptr(&self) -> *const T {
+    pub fn as_ptr(&self) -> *const T {
         self.ptr
     }
 
     #[inline]
-    pub unsafe fn as_mut_ptr(&mut self) -> *mut T {
+    pub fn as_mut_ptr(&mut self) -> *mut T {
         self.ptr
     }
 }

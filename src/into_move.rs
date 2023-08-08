@@ -48,6 +48,15 @@ impl<P: DerefMove> IntoMove for Pin<P> {
     }
 }
 
+/// # Safety
+///
+/// Implementers must ensure that the pointer returned by
+/// `allocate_uninitialized_cxx_storage` is a valid, non-null,
+/// pointer to a new but uninitialized storage block, and that
+/// such blocks must be freeable using either of these routes:
+///
+/// - before they're initialized, using `free_uninitialized_cxx_storage`
+/// - after they're initialized, via a delete expression like `delete p;`
 #[cfg(feature = "cxx")]
 pub unsafe trait CxxUniquePtrAllocate {
     unsafe fn allocate_uninitialized_cxx_storage() -> *mut Self;

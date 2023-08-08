@@ -1,20 +1,31 @@
 use crate::{into_move::IntoMove, move_ref::MoveRef};
 use core::{mem::MaybeUninit, pin::Pin};
 
-pub unsafe trait New: Sized {
+pub trait New: Sized {
     type Output;
 
+    /// # Safety
+    ///
+    /// - [`New::new()`] must not be used to mutate previously initialized data
+    /// - `this` must be freshly-allocated memory
+    /// - after invocation, the `this` placement argument is in a valid, initialized state
+    #[allow(clippy::new_ret_no_self, clippy::wrong_self_convention)]
     unsafe fn new(self, this: Pin<&mut MaybeUninit<Self::Output>>);
 }
 
-pub unsafe trait TryNew {
+pub trait TryNew {
     type Output;
     type Error;
 
+    /// # Safety
+    ///
+    /// - [`TryNew::try_new()`] must not be used to mutate previously initialized data
+    /// - `this` must be freshly-allocated memory
+    /// - after invocation, the `this` placement argument is in a valid, initialized state
     unsafe fn try_new(self, this: Pin<&mut MaybeUninit<Self::Output>>) -> Result<(), Self::Error>;
 }
 
-unsafe impl<N: New> TryNew for N {
+impl<N: New> TryNew for N {
     type Output = N::Output;
     type Error = core::convert::Infallible;
 
@@ -24,37 +35,48 @@ unsafe impl<N: New> TryNew for N {
     }
 }
 
-pub unsafe trait CopyNew: Sized {
+pub trait CopyNew: Sized {
+    /// # Safety
+    ///
+    /// - the same safety requirements as [`New::new()`] apply with respect to `dst`
+    /// - `src` must remain in a valid state, and must be unmodified with respect to its data
     unsafe fn copy_new(src: &Self, dst: Pin<&mut MaybeUninit<Self>>);
 }
 
-pub unsafe trait MoveNew: Sized {
+pub trait MoveNew: Sized {
+    /// # Safety
+    ///
+    /// - the same safety requirements as [`New::new()`] apply with respect to `dst`
+    /// - `src` must remain in a valid state, but may be modified with respect to its data
     unsafe fn move_new(src: Pin<MoveRef<Self>>, dst: Pin<&mut MaybeUninit<Self>>);
 }
 
+/// # Safety
+///
+/// - `initializer` must satisfy the same safety requirements as [`New::new()`]
 #[inline]
-pub unsafe fn by_raw<T, F>(f: F) -> impl New<Output = T>
+pub unsafe fn by_raw<T, F>(initializer: F) -> impl New<Output = T>
 where
     F: FnOnce(Pin<&mut MaybeUninit<T>>),
 {
     struct FnNew<F, T> {
-        f: F,
+        initializer: F,
         _type: core::marker::PhantomData<fn(Pin<&mut MaybeUninit<T>>)>,
     }
 
-    unsafe impl<F, T> New for FnNew<F, T>
+    impl<F, T> New for FnNew<F, T>
     where
         F: FnOnce(Pin<&mut MaybeUninit<T>>),
     {
         type Output = T;
         #[inline]
         unsafe fn new(self, this: Pin<&mut MaybeUninit<Self::Output>>) {
-            (self.f)(this)
+            (self.initializer)(this)
         }
     }
 
     FnNew {
-        f,
+        initializer,
         _type: core::marker::PhantomData,
     }
 }
@@ -113,7 +135,7 @@ mod test {
             }
         }
 
-        unsafe impl crate::MoveNew for Pinned {
+        impl crate::MoveNew for Pinned {
             unsafe fn move_new(
                 _src: core::pin::Pin<MoveRef<Self>>,
                 _dst: core::pin::Pin<&mut core::mem::MaybeUninit<Self>>,

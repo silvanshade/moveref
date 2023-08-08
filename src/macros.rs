@@ -93,7 +93,7 @@ macro_rules! bind_slot {
 macro_rules! trivial_copy {
     ($($ty:ty $(where [$($targs:tt)*])?),* $(,)?) => {
         $(
-            unsafe impl<$($($targs)*)?> $crate::new::CopyNew for $ty where Self: ::core::clone::Clone {
+            impl<$($($targs)*)?> $crate::new::CopyNew for $ty where Self: ::core::clone::Clone {
                 unsafe fn copy_new(
                     this: &Self,
                     that: ::core::pin::Pin<&mut ::core::mem::MaybeUninit<Self>>,
@@ -110,7 +110,7 @@ macro_rules! trivial_copy {
 macro_rules! trivial_move {
     ($($ty:ty $(where [$($targs:tt)*])?),* $(,)?) => {
         $(
-            unsafe impl<$($($targs)*)?> $crate::new::MoveNew for $ty {
+            impl<$($($targs)*)?> $crate::new::MoveNew for $ty {
                 unsafe fn move_new(
                     this: ::core::pin::Pin<$crate::move_ref::MoveRef<'_, Self>>,
                     that: ::core::pin::Pin<&mut ::core::mem::MaybeUninit<Self>>,

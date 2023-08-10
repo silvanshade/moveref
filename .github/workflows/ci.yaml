@@ -10,7 +10,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_NIGHTLY_TOOLCHAIN: nightly-2023-08-07
 
 jobs:
   cargo-deny:
@@ -35,6 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(cat rust-toolchain.nightly)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
@@ -83,6 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(cat rust-toolchain.nightly)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
@@ -107,6 +108,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(cat rust-toolchain.nightly)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}

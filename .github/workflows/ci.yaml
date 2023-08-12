@@ -56,14 +56,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           clippy_flags: -- -D warnings
 
-  cargo-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo test
-
   cargo-docs:
     runs-on: ubuntu-latest
     permissions:

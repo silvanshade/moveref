@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(cat rust-toolchain.nightly)" >> $GITHUB_ENV
+      - run: echo "RUST_NIGHTLY_TOOLCHAIN=nightly-$(jq -r '.rust.toolchain.nightly' workspace.json)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(cat rust-toolchain.nightly)" >> $GITHUB_ENV
+      - run: echo "RUST_NIGHTLY_TOOLCHAIN=nightly-$(jq -r '.rust.toolchain.nightly' workspace.json)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
@@ -108,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(cat rust-toolchain.nightly)" >> $GITHUB_ENV
+      - run: echo "RUST_NIGHTLY_TOOLCHAIN=nightly-$(jq -r '.rust.toolchain.nightly' workspace.json)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}

@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: echo "RUST_NIGHTLY_TOOLCHAIN=nightly-$(jq -r '.rust.toolchain.nightly' workspace.json)" >> $GITHUB_ENV
+      - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(awk '/^channel\s*=\s*".*"$/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' rust-toolchain.toml)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
@@ -46,8 +46,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(awk '/^channel\s*=\s*".*"$/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' rust-toolchain.toml)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
           components: clippy
       - uses: Swatinem/rust-cache@v2
       - uses: giraffate/clippy-action@v1
@@ -55,6 +57,7 @@ jobs:
           reporter: "github-pr-review"
           github_token: ${{ secrets.GITHUB_TOKEN }}
           clippy_flags: -- -D warnings
+      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} clippy -- -D warnings
 
   cargo-docs:
     runs-on: ubuntu-latest
@@ -75,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: echo "RUST_NIGHTLY_TOOLCHAIN=nightly-$(jq -r '.rust.toolchain.nightly' workspace.json)" >> $GITHUB_ENV
+      - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(awk '/^channel\s*=\s*".*"$/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' rust-toolchain.toml)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
@@ -100,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: echo "RUST_NIGHTLY_TOOLCHAIN=nightly-$(jq -r '.rust.toolchain.nightly' workspace.json)" >> $GITHUB_ENV
+      - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(awk '/^channel\s*=\s*".*"$/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' rust-toolchain.toml)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}

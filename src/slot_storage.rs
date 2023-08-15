@@ -52,7 +52,7 @@ impl<'frame> SlotStorageStatus<'frame> {
     #[inline]
     pub(crate) fn increment(&self) {
         debug_assert!(self.references_are_zeroed());
-        self.references.set(self.references.get() + 1)
+        self.references.set(self.references.get() + 1);
     }
 
     #[inline]
@@ -65,7 +65,7 @@ impl<'frame> SlotStorageStatus<'frame> {
     #[inline]
     pub(crate) fn decrement(&self) {
         debug_assert!(!self.references_are_zeroed());
-        self.references.set(self.references.get() - 1)
+        self.references.set(self.references.get() - 1);
     }
 
     #[inline]
@@ -104,6 +104,7 @@ impl<'frame> SlotStorageStatus<'frame> {
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
 #[allow(unused)] // NOTE: used in macros
 #[derive(Copy, Clone, Debug)]
 pub enum SlotStorageKind {
@@ -146,9 +147,7 @@ impl<T> SlotStorage<T> {
         impl Drop for DoublePanic {
             #[inline]
             fn drop(&mut self) {
-                if cfg!(not(test)) {
-                    panic!()
-                }
+                assert!(!cfg!(not(test)));
             }
         }
 
@@ -163,6 +162,7 @@ impl<T> SlotStorage<T> {
 }
 
 impl<T> SlotStorage<T> {
+    #[must_use]
     #[allow(unused)] // NOTE: used in macros
     #[inline]
     pub fn new(kind: SlotStorageKind) -> Self {

@@ -19,6 +19,9 @@ impl<'frame, T> Slot<'frame, T> {
         }
     }
 
+    /// # Errors
+    ///
+    /// Should return `Err` if the `new` initializer fails with an error.
     #[inline]
     pub fn try_emplace<N: TryNew<Output = T>>(self, new: N) -> Result<Pin<MoveRef<'frame, T>>, N::Error> {
         self.status.initialize();

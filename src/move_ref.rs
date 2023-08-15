@@ -42,6 +42,7 @@ impl<'frame, T: ?Sized> MoveRef<'frame, T> {
         Self { ptr, status }
     }
 
+    #[must_use]
     #[inline]
     pub fn into_pin(self) -> Pin<Self> {
         unsafe { Pin::new_unchecked(self) }
@@ -57,6 +58,7 @@ impl<'frame, T: ?Sized> MoveRef<'frame, T> {
 }
 
 impl<'frame, T> MoveRef<'frame, T> {
+    #[must_use]
     #[inline]
     pub fn into_inner(self) -> T {
         let pin = unsafe { Pin::new_unchecked(self) };
@@ -64,11 +66,13 @@ impl<'frame, T> MoveRef<'frame, T> {
         unsafe { core::ptr::read(ptr) }
     }
 
+    #[must_use]
     #[inline]
     pub fn as_ptr(&self) -> *const T {
         self.ptr
     }
 
+    #[must_use]
     #[inline]
     pub fn as_mut_ptr(&mut self) -> *mut T {
         self.ptr

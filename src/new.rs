@@ -13,10 +13,15 @@ pub trait New: Sized {
     unsafe fn new(self, this: Pin<&mut MaybeUninit<Self::Output>>);
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub trait TryNew {
     type Output;
     type Error;
 
+    /// # Errors
+    ///
+    /// Should return `Err` if initialization failed.
+    ///
     /// # Safety
     ///
     /// - [`TryNew::try_new()`] must not be used to mutate previously initialized data
@@ -35,6 +40,7 @@ impl<N: New> TryNew for N {
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub trait CopyNew: Sized {
     /// # Safety
     ///
@@ -42,6 +48,7 @@ pub trait CopyNew: Sized {
     unsafe fn copy_new(src: &Self, dst: Pin<&mut MaybeUninit<Self>>);
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub trait MoveNew: Sized {
     /// # Safety
     ///
@@ -69,7 +76,7 @@ where
         type Output = T;
         #[inline]
         unsafe fn new(self, this: Pin<&mut MaybeUninit<Self::Output>>) {
-            (self.initializer)(this)
+            (self.initializer)(this);
         }
     }
 

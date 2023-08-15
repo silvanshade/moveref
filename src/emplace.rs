@@ -12,6 +12,9 @@ pub trait Emplace<T>: Sized + Deref {
         }
     }
 
+    /// # Errors
+    ///
+    /// Should return `Err` if the `new` initializer fails with an error.
     fn try_emplace<N: TryNew<Output = T>>(self, new: N) -> Result<Self::Output, N::Error>;
 }
 
@@ -36,9 +39,8 @@ impl<T> Emplace<T> for crate::Rc<T> {
     #[inline]
     fn try_emplace<N: TryNew<Output = T>>(self, new: N) -> Result<Self::Output, N::Error> {
         let mut uninit = crate::Rc::new(MaybeUninit::<T>::uninit());
-        let ptr = match crate::Rc::get_mut(&mut uninit) {
-            Some(ptr) => ptr,
-            None => unreachable!("No pointers to `uninit` exist since it was freshly created"),
+        let Some(ptr) = crate::Rc::get_mut(&mut uninit) else {
+            unreachable!("No pointers to `uninit` exist since it was freshly created")
         };
         let pin = unsafe { Pin::new_unchecked(ptr) };
         unsafe { new.try_new(pin)? };
@@ -55,9 +57,8 @@ impl<T> Emplace<T> for crate::Arc<T> {
     #[inline]
     fn try_emplace<N: TryNew<Output = T>>(self, new: N) -> Result<Self::Output, N::Error> {
         let mut uninit = crate::Arc::new(MaybeUninit::<T>::uninit());
-        let ptr = match crate::Arc::get_mut(&mut uninit) {
-            Some(ptr) => ptr,
-            None => unreachable!("No pointers to `uninit` exist since it was freshly created"),
+        let Some(ptr) = crate::Arc::get_mut(&mut uninit) else {
+            unreachable!("No pointers to `uninit` exist since it was freshly created")
         };
         let pin = unsafe { Pin::new_unchecked(ptr) };
         unsafe { new.try_new(pin)? };

@@ -81,7 +81,7 @@ jobs:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - run: |
           mkdir -p .github/caching
-          cargo search cargo-tarpaulin | awk '/^cargo-tarpaulin/{gsub(/"/,"",$3); print $3}' > .github/caching/cargo-tarpaulin.lock
+          cargo search cargo-tarpaulin | awk '/^cargo-tarpaulin/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' > .github/caching/cargo-tarpaulin.lock
       - id: cache-cargo-tarpaulin
         uses: actions/cache@v3
         with:
@@ -115,7 +115,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: |
           mkdir -p .github/caching
-          cargo search cargo-valgrind | awk '/^cargo-valgrind/{gsub(/"/,"",$3); print $3}' > .github/caching/cargo-valgrind.lock
+          cargo search cargo-valgrind | awk '/^cargo-valgrind/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' > .github/caching/cargo-valgrind.lock
       - id: cache-cargo-valgrind
         uses: actions/cache@v3
         with:

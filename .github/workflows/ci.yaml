@@ -10,6 +10,9 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # Set `RUST_NIGHTLY_TOOLCHAIN` once globally to silence linter. Overwritten in jobs.
+  # For context see https://github.com/github/vscode-github-actions/issues/96
+  RUST_NIGHTLY_TOOLCHAIN: nightly
 
 jobs:
   cargo-deny:
@@ -101,7 +104,7 @@ jobs:
         with:
           path: ${{ runner.tool_cache }}/cargo-tarpaulin/bin
           key: cargo-tarpaulin-bin-${{ hashFiles('.github/caching/cargo-tarpaulin.lock') }}
-      - if: "steps.cache-cargo-tarpaulin.outputs.cache-hit != 'true'"
+      - if: steps.cache-cargo-tarpaulin.outputs.cache-hit != 'true'
         run: cargo install --root ${{ runner.tool_cache }}/cargo-tarpaulin --force cargo-tarpaulin
       - run: echo "${{ runner.tool_cache }}/cargo-tarpaulin/bin" >> $GITHUB_PATH
       - uses: Swatinem/rust-cache@v2
@@ -135,7 +138,7 @@ jobs:
         with:
           path: ${{ runner.tool_cache }}/cargo-valgrind/bin
           key: cargo-valgrind-bin-${{ hashFiles('.github/caching/cargo-valgrind.lock') }}
-      - if: "steps.cache-cargo-valgrind.outputs.cache-hit != 'true'"
+      - if: steps.cache-cargo-valgrind.outputs.cache-hit != 'true'
         run: cargo install --root ${{ runner.tool_cache }}/cargo-valgrind --force cargo-valgrind
       - run: echo "${{ runner.tool_cache }}/cargo-valgrind/bin" >> $GITHUB_PATH
       - uses: Swatinem/rust-cache@v2

@@ -74,6 +74,17 @@ jobs:
           publish_dir: ./target/doc
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
+  cargo-test:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test
+
   cargo-test-coverage:
     runs-on: ubuntu-latest
     steps:

@@ -4,7 +4,6 @@
     "davidanson.vscode-markdownlint",
     "rust-lang.rust-analyzer",
     "tamasfe.even-better-toml",
-    "twxs.cmake",
     "vadimcn.vscode-lldb"
   ]
 }

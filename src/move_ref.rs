@@ -9,6 +9,15 @@ pub struct MoveRef<'frame, T: ?Sized> {
     pub(crate) status: SlotStorageStatus<'frame>,
 }
 
+impl<'frame, T: ?Sized> core::fmt::Debug for MoveRef<'frame, T>
+where
+    T: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        core::fmt::Debug::fmt(self.ptr, f)
+    }
+}
+
 impl<T: ?Sized> Deref for MoveRef<'_, T> {
     type Target = T;
 
@@ -76,6 +85,70 @@ impl<'frame, T> MoveRef<'frame, T> {
     #[inline]
     pub fn as_mut_ptr(&mut self) -> *mut T {
         self.ptr
+    }
+}
+
+impl<'s, 't, S, T: ?Sized> PartialEq<MoveRef<'s, S>> for MoveRef<'t, T>
+where
+    T: PartialEq<S>,
+{
+    #[inline]
+    fn eq(&self, other: &MoveRef<'s, S>) -> bool {
+        self.ptr == other.ptr
+    }
+}
+
+impl<'t, T> Eq for MoveRef<'t, T> where T: PartialEq
+{
+}
+
+impl<'s, 't, S, T: ?Sized> PartialOrd<MoveRef<'s, S>> for MoveRef<'t, T>
+where
+    T: PartialOrd<S>,
+{
+    #[inline]
+    fn partial_cmp(&self, other: &MoveRef<'s, S>) -> Option<core::cmp::Ordering> {
+        self.ptr.partial_cmp(&other.ptr)
+    }
+
+    #[inline]
+    fn lt(&self, other: &MoveRef<'s, S>) -> bool {
+        self.ptr.lt(&other.ptr)
+    }
+
+    #[inline]
+    fn le(&self, other: &MoveRef<'s, S>) -> bool {
+        self.ptr.le(&other.ptr)
+    }
+
+    #[inline]
+    fn gt(&self, other: &MoveRef<'s, S>) -> bool {
+        self.ptr.gt(&other.ptr)
+    }
+
+    #[inline]
+    fn ge(&self, other: &MoveRef<'s, S>) -> bool {
+        self.ptr.ge(&other.ptr)
+    }
+}
+
+impl<'t, T> Ord for MoveRef<'t, T>
+where
+    T: Ord,
+{
+    #[inline]
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+        self.ptr.cmp(&other.ptr)
+    }
+}
+
+impl<'t, T: ?Sized> core::hash::Hash for MoveRef<'t, T>
+where
+    T: core::hash::Hash,
+{
+    #[inline]
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.ptr.hash(state);
     }
 }
 

@@ -131,7 +131,9 @@ jobs:
       - run: echo "${{ runner.tool_cache }}/cargo-tarpaulin/bin" >> $GITHUB_PATH
       - uses: Swatinem/rust-cache@v2
       - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} tarpaulin --verbose --workspace --timeout 120 --out Xml
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           fail_ci_if_error: true
 

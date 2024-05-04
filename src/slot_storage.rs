@@ -9,7 +9,7 @@ pub(crate) struct SlotStorageTracker {
 
 impl SlotStorageTracker {
     #[inline]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             initialized: Cell::new(false),
             released: Cell::new(false),
@@ -18,7 +18,7 @@ impl SlotStorageTracker {
     }
 
     #[inline]
-    pub fn status(&self) -> SlotStorageStatus<'_> {
+    pub const fn status(&self) -> SlotStorageStatus<'_> {
         SlotStorageStatus {
             initialized: &self.initialized,
             released: &self.released,
@@ -37,7 +37,7 @@ pub(crate) struct SlotStorageStatus<'frame> {
 impl<'frame> SlotStorageStatus<'frame> {
     #[allow(unused)] // NOTE: used (indirectly) in macros
     #[inline]
-    pub(crate) fn new(
+    pub(crate) const fn new(
         initialized: &'frame Cell<bool>,
         released: &'frame Cell<bool>,
         references: &'frame Cell<usize>,
@@ -133,7 +133,7 @@ impl<T> Drop for SlotStorage<T> {
         if status.is_leaking() {
             self.double_panic();
         }
-        if let SlotStorageKind::Drop = self.kind {
+        if matches!(self.kind, SlotStorageKind::Drop) {
             unsafe { self.memory.assume_init_drop() }
         }
     }
@@ -165,7 +165,7 @@ impl<T> SlotStorage<T> {
     #[must_use]
     #[allow(unused)] // NOTE: used in macros
     #[inline]
-    pub fn new(kind: SlotStorageKind) -> Self {
+    pub const fn new(kind: SlotStorageKind) -> Self {
         Self {
             kind,
             memory: MaybeUninit::uninit(),

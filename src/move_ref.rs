@@ -183,14 +183,14 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "a critical reference counter at")]
     fn forget_move_ref() {
         bind!(x: MoveRef<i32> = &move 42);
         core::mem::forget(x);
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "a critical reference counter at")]
     fn forget_move_ref_temporary() {
         core::mem::forget(expr!(&move 42));
     }
@@ -198,7 +198,7 @@ mod test {
     #[cfg_attr(miri, ignore)]
     #[cfg(all(feature = "alloc", not(feature = "valgrind")))]
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "a critical reference counter at")]
     fn forget_deref_moved_box() {
         let mut x = crate::Box::new(5);
         let ptr = x.as_mut() as *mut i32;

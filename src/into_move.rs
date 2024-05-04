@@ -42,7 +42,7 @@ impl<P: DerefMove> IntoMove for Pin<P> {
     where
         Self: 'frame,
     {
-        let inner = unsafe { Pin::into_inner_unchecked(self) };
+        let inner = unsafe { Self::into_inner_unchecked(self) };
         let this = P::deref_move(inner, storage);
         MoveRef::into_pin(this)
     }

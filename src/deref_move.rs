@@ -40,7 +40,7 @@ unsafe impl<T> DerefMove for crate::Box<T> {
     where
         Self: 'frame,
     {
-        let cast = crate::Box::into_raw(self).cast::<MaybeUninit<T>>();
+        let cast = Self::into_raw(self).cast::<MaybeUninit<T>>();
         let cast = unsafe { crate::Box::from_raw(cast) };
         let (ptr, status) = storage.write(cast);
         let ptr = unsafe { ptr.assume_init_mut() };

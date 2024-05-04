@@ -27,8 +27,8 @@ impl<T> Emplace<T> for crate::Box<T> {
         let mut uninit = crate::Box::new(MaybeUninit::<T>::uninit());
         let pin = unsafe { Pin::new_unchecked(&mut *uninit) };
         unsafe { new.try_new(pin)? };
-        let ptr = unsafe { crate::Box::from_raw(crate::Box::into_raw(uninit).cast::<T>()) };
-        Ok(crate::Box::into_pin(ptr))
+        let ptr = unsafe { Self::from_raw(crate::Box::into_raw(uninit).cast::<T>()) };
+        Ok(Self::into_pin(ptr))
     }
 }
 
@@ -44,7 +44,7 @@ impl<T> Emplace<T> for crate::Rc<T> {
         };
         let pin = unsafe { Pin::new_unchecked(ptr) };
         unsafe { new.try_new(pin)? };
-        let ptr = unsafe { crate::Rc::from_raw(crate::Rc::into_raw(uninit).cast::<T>()) };
+        let ptr = unsafe { Self::from_raw(crate::Rc::into_raw(uninit).cast::<T>()) };
         let pin = unsafe { Pin::new_unchecked(ptr) };
         Ok(pin)
     }
@@ -62,7 +62,7 @@ impl<T> Emplace<T> for crate::Arc<T> {
         };
         let pin = unsafe { Pin::new_unchecked(ptr) };
         unsafe { new.try_new(pin)? };
-        let ptr = unsafe { crate::Arc::from_raw(crate::Arc::into_raw(uninit).cast::<T>()) };
+        let ptr = unsafe { Self::from_raw(crate::Arc::into_raw(uninit).cast::<T>()) };
         let pin = unsafe { Pin::new_unchecked(ptr) };
         Ok(pin)
     }

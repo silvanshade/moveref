@@ -7,6 +7,8 @@ license = "Apache-2.0 WITH LLVM-exception"
 repository = "https://github.com/silvanshade/moveref"
 documentation = "https://silvanshade.github.io/moveref/moveref"
 description = "Types and traits for C++ style placement initialization and move semantics"
+keywords = ["C++", "allocation", "ffi", "memory", "references"]
+categories = ["memory-management", "rust-patterns"]
 
 [features]
 alloc = []

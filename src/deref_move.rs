@@ -51,7 +51,7 @@ unsafe impl<T> DerefMove for crate::Box<T> {
         let cast = unsafe { crate::Box::from_raw(cast) };
         let (ptr, status) = storage.write(cast);
         let ptr = unsafe { ptr.assume_init_mut() };
-        unsafe { MoveRef::new_unchecked(ptr, status) }
+        return unsafe { MoveRef::new_unchecked(ptr, status) };
     }
 }
 
@@ -64,7 +64,7 @@ unsafe impl<'f, T: ?Sized> DerefMove for MoveRef<'f, T> {
     where
         Self: 'frame,
     {
-        self
+        return self;
     }
 }
 
@@ -82,6 +82,6 @@ where
     where
         Self: 'frame,
     {
-        Pin::into_inner(self.into_move(storage))
+        return Pin::into_inner(self.into_move(storage));
     }
 }

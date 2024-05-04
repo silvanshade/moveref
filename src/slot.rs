@@ -15,7 +15,7 @@ impl<'frame, T> Slot<'frame, T> {
     #[inline]
     pub fn emplace<N: New<Output = T>>(self, new: N) -> Pin<MoveRef<'frame, T>> {
         match self.try_emplace(new) {
-            | Ok(pin) => pin,
+            | Ok(pin) => return pin,
             | Err(err) => match err {},
         }
     }
@@ -33,24 +33,24 @@ impl<'frame, T> Slot<'frame, T> {
         let ptr = unsafe { self.memory.assume_init_mut() };
         let mov = unsafe { MoveRef::new_unchecked(ptr, self.status) };
         let pin = mov.into_pin();
-        Ok(pin)
+        return Ok(pin);
     }
 
     #[inline]
     pub fn pin(self, val: T) -> Pin<MoveRef<'frame, T>> {
-        self.emplace(crate::new::of(val))
+        return self.emplace(crate::new::of(val));
     }
 
     #[inline]
     pub fn put(self, val: T) -> MoveRef<'frame, T> {
         let pin = self.pin(val);
-        unsafe { Pin::into_inner_unchecked(pin) }
+        return unsafe { Pin::into_inner_unchecked(pin) };
     }
 
     #[inline]
     pub(crate) fn write(self, val: T) -> (&'frame mut T, SlotStorageStatus<'frame>) {
         self.status.initialize();
         let ptr = self.memory.write(val);
-        (ptr, self.status)
+        return (ptr, self.status);
     }
 }

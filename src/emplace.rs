@@ -8,7 +8,7 @@ pub trait Emplace<T>: Sized + Deref {
     #[inline]
     fn emplace<N: New<Output = T>>(self, new: N) -> Self::Output {
         match self.try_emplace(new) {
-            | Ok(val) => val,
+            | Ok(val) => return val,
             | Err(err) => match err {},
         }
     }
@@ -29,7 +29,7 @@ impl<T> Emplace<T> for crate::Box<T> {
         let pin = unsafe { Pin::new_unchecked(&mut *uninit) };
         unsafe { new.try_new(pin)? };
         let ptr = unsafe { Self::from_raw(crate::Box::into_raw(uninit).cast::<T>()) };
-        Ok(Self::into_pin(ptr))
+        return Ok(Self::into_pin(ptr));
     }
 }
 
@@ -47,7 +47,7 @@ impl<T> Emplace<T> for crate::Rc<T> {
         unsafe { new.try_new(pin)? };
         let ptr = unsafe { Self::from_raw(crate::Rc::into_raw(uninit).cast::<T>()) };
         let pin = unsafe { Pin::new_unchecked(ptr) };
-        Ok(pin)
+        return Ok(pin);
     }
 }
 
@@ -65,6 +65,6 @@ impl<T> Emplace<T> for crate::Arc<T> {
         unsafe { new.try_new(pin)? };
         let ptr = unsafe { Self::from_raw(crate::Arc::into_raw(uninit).cast::<T>()) };
         let pin = unsafe { Pin::new_unchecked(ptr) };
-        Ok(pin)
+        return Ok(pin);
     }
 }

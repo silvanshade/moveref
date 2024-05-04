@@ -37,7 +37,7 @@ impl<N: New> TryNew for N {
 
     unsafe fn try_new(self, this: Pin<&mut MaybeUninit<Self::Output>>) -> Result<(), Self::Error> {
         self.new(this);
-        Ok(())
+        return Ok(());
     }
 }
 
@@ -81,10 +81,10 @@ where
         }
     }
 
-    FnNew {
+    return FnNew {
         initializer,
         _type: core::marker::PhantomData,
-    }
+    };
 }
 
 #[inline]
@@ -93,17 +93,17 @@ where
     F: FnOnce() -> T,
 {
     let val = f();
-    unsafe { by_raw(|mut dst| dst.set(MaybeUninit::new(val))) }
+    unsafe { return by_raw(|mut dst| dst.set(MaybeUninit::new(val))) }
 }
 
 #[inline]
 pub fn of<T>(val: T) -> impl New<Output = T> {
-    by(|| val)
+    return by(|| return val);
 }
 
 #[inline]
 pub fn default<T: Default>() -> impl New<Output = T> {
-    by(Default::default)
+    return by(Default::default);
 }
 
 #[inline]
@@ -113,14 +113,14 @@ where
     P::Target: MoveNew,
 {
     unsafe {
-        by_raw(move |dst| {
+        return by_raw(move |dst| {
             bind_slot!(
                 #[dropping]
                 storage
             );
             let src = ptr.into_move(storage);
             MoveNew::move_new(src, dst);
-        })
+        });
     }
 }
 
@@ -137,7 +137,7 @@ mod test {
 
         impl Pinned {
             fn new() -> impl New<Output = Self> {
-                crate::new::default()
+                return crate::new::default();
             }
         }
 

@@ -15,7 +15,7 @@ where
     T: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        core::fmt::Debug::fmt(self.ptr, f)
+        return core::fmt::Debug::fmt(self.ptr, f);
     }
 }
 
@@ -24,14 +24,14 @@ impl<T: ?Sized> Deref for MoveRef<'_, T> {
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        self.ptr
+        return self.ptr;
     }
 }
 
 impl<T: ?Sized> DerefMut for MoveRef<'_, T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.ptr
+        return self.ptr;
     }
 }
 
@@ -52,13 +52,13 @@ impl<'frame, T: ?Sized> MoveRef<'frame, T> {
         ptr: &'frame mut T,
         status: SlotStorageStatus<'frame>,
     ) -> Self {
-        Self { ptr, status }
+        return Self { ptr, status };
     }
 
     #[must_use]
     #[inline]
     pub fn into_pin(self) -> Pin<Self> {
-        unsafe { Pin::new_unchecked(self) }
+        return unsafe { Pin::new_unchecked(self) };
     }
 
     #[inline]
@@ -66,7 +66,7 @@ impl<'frame, T: ?Sized> MoveRef<'frame, T> {
     pub fn release(pin: Pin<Self>) -> *mut T {
         let mov = unsafe { Pin::into_inner_unchecked(pin) };
         unsafe { mov.status.release() };
-        mov.ptr
+        return mov.ptr;
     }
 }
 
@@ -76,19 +76,19 @@ impl<'frame, T> MoveRef<'frame, T> {
     pub fn into_inner(self) -> T {
         let pin = unsafe { Pin::new_unchecked(self) };
         let ptr = MoveRef::release(pin);
-        unsafe { core::ptr::read(ptr) }
+        return unsafe { core::ptr::read(ptr) };
     }
 
     #[must_use]
     #[inline]
     pub fn as_ptr(&self) -> *const T {
-        self.ptr
+        return self.ptr;
     }
 
     #[must_use]
     #[inline]
     pub fn as_mut_ptr(&mut self) -> *mut T {
-        self.ptr
+        return self.ptr;
     }
 }
 
@@ -98,7 +98,7 @@ where
 {
     #[inline]
     fn eq(&self, other: &MoveRef<'s, S>) -> bool {
-        self.ptr == other.ptr
+        return self.ptr == other.ptr;
     }
 }
 
@@ -112,27 +112,27 @@ where
 {
     #[inline]
     fn partial_cmp(&self, other: &MoveRef<'s, S>) -> Option<core::cmp::Ordering> {
-        self.ptr.partial_cmp(&other.ptr)
+        return self.ptr.partial_cmp(&other.ptr);
     }
 
     #[inline]
     fn lt(&self, other: &MoveRef<'s, S>) -> bool {
-        self.ptr.lt(&other.ptr)
+        return self.ptr.lt(&other.ptr);
     }
 
     #[inline]
     fn le(&self, other: &MoveRef<'s, S>) -> bool {
-        self.ptr.le(&other.ptr)
+        return self.ptr.le(&other.ptr);
     }
 
     #[inline]
     fn gt(&self, other: &MoveRef<'s, S>) -> bool {
-        self.ptr.gt(&other.ptr)
+        return self.ptr.gt(&other.ptr);
     }
 
     #[inline]
     fn ge(&self, other: &MoveRef<'s, S>) -> bool {
-        self.ptr.ge(&other.ptr)
+        return self.ptr.ge(&other.ptr);
     }
 }
 
@@ -142,7 +142,7 @@ where
 {
     #[inline]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
-        self.ptr.cmp(&other.ptr)
+        return self.ptr.cmp(&other.ptr);
     }
 }
 

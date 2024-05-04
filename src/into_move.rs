@@ -25,7 +25,7 @@ impl<T> IntoMove for crate::Box<T> {
     where
         Self: 'frame,
     {
-        MoveRef::into_pin(self.deref_move(storage))
+        return MoveRef::into_pin(self.deref_move(storage));
     }
 }
 
@@ -40,7 +40,7 @@ impl<'f, T: ?Sized> IntoMove for MoveRef<'f, T> {
     where
         Self: 'frame,
     {
-        MoveRef::into_pin(self.deref_move(storage))
+        return MoveRef::into_pin(self.deref_move(storage));
     }
 }
 
@@ -57,7 +57,7 @@ impl<P: DerefMove> IntoMove for Pin<P> {
     {
         let inner = unsafe { Self::into_inner_unchecked(self) };
         let this = P::deref_move(inner, storage);
-        MoveRef::into_pin(this)
+        return MoveRef::into_pin(this);
     }
 }
 
@@ -86,7 +86,7 @@ where
 {
     #[inline]
     fn assume_init_mut(&mut self) -> &mut T {
-        unsafe { &mut *self.0 }
+        return unsafe { &mut *self.0 };
     }
 }
 
@@ -108,6 +108,6 @@ where
         let cast = CxxUniquePtrStorage(self.into_raw());
         let (ptr, status) = storage.write(cast);
         let this = unsafe { MoveRef::new_unchecked(ptr.assume_init_mut(), status) };
-        MoveRef::into_pin(this)
+        return MoveRef::into_pin(this);
     }
 }

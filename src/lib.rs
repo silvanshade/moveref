@@ -1,9 +1,11 @@
 #![deny(clippy::all)]
 #![deny(clippy::cargo)]
+#![deny(clippy::implicit_return)]
 #![deny(clippy::nursery)]
 #![deny(clippy::pedantic)]
-#![allow(clippy::type_repetition_in_bounds)]
+#![allow(clippy::needless_return)]
 #![allow(clippy::redundant_pub_crate)]
+#![allow(clippy::type_repetition_in_bounds)]
 #![no_std]
 
 #[cfg(feature = "alloc")]

@@ -11,20 +11,20 @@ pub(crate) struct SlotStorageTracker {
 impl SlotStorageTracker {
     #[inline]
     pub const fn new() -> Self {
-        Self {
+        return Self {
             initialized: Cell::new(false),
             released: Cell::new(false),
             references: Cell::new(0),
-        }
+        };
     }
 
     #[inline]
     pub const fn status(&self) -> SlotStorageStatus<'_> {
-        SlotStorageStatus {
+        return SlotStorageStatus {
             initialized: &self.initialized,
             released: &self.released,
             references: &self.references,
-        }
+        };
     }
 }
 
@@ -43,11 +43,11 @@ impl<'frame> SlotStorageStatus<'frame> {
         released: &'frame Cell<bool>,
         references: &'frame Cell<usize>,
     ) -> Self {
-        Self {
+        return Self {
             initialized,
             released,
             references,
-        }
+        };
     }
 
     #[inline]
@@ -71,27 +71,27 @@ impl<'frame> SlotStorageStatus<'frame> {
 
     #[inline]
     pub(crate) fn is_leaking(&self) -> bool {
-        !self.is_released() && self.is_initialized() && !self.references_are_zeroed()
+        return !self.is_released() && self.is_initialized() && !self.references_are_zeroed();
     }
 
     #[inline]
     pub(crate) fn is_initialized(&self) -> bool {
-        self.initialized.get()
+        return self.initialized.get();
     }
 
     #[inline]
     pub(crate) fn is_uninitialized(&self) -> bool {
-        self.references_are_zeroed() && !self.is_initialized()
+        return self.references_are_zeroed() && !self.is_initialized();
     }
 
     #[inline]
     pub(crate) fn is_released(&self) -> bool {
-        self.released.get()
+        return self.released.get();
     }
 
     #[inline]
     pub(crate) fn references_are_zeroed(&self) -> bool {
-        self.references.get() == 0
+        return self.references.get() == 0;
     }
 
     #[inline]
@@ -170,13 +170,13 @@ impl<T> SlotStorage<T> {
     #[allow(unused)] // NOTE: used in macros
     #[inline]
     pub const fn new(kind: SlotStorageKind) -> Self {
-        Self {
+        return Self {
             kind,
             memory: MaybeUninit::uninit(),
             tracker: SlotStorageTracker::new(),
             #[cfg(debug_assertions)]
             location: core::panic::Location::caller(),
-        }
+        };
     }
 
     #[allow(unused)] // NOTE: used in macros
@@ -184,6 +184,6 @@ impl<T> SlotStorage<T> {
     pub fn slot(&mut self) -> Slot<'_, T> {
         let memory = &mut self.memory;
         let status = self.tracker.status();
-        Slot { memory, status }
+        return Slot { memory, status };
     }
 }

@@ -1,0 +1,1 @@
+searchState.loadedDescShard("moveref", 0, "Safety\nReturns the argument unchanged.\nReturns the argument unchanged.\nReturns the argument unchanged.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.\nErrors\nErrors\nSafety\nSafety\nSafety\nSafety\nErrors")

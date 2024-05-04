@@ -1,5 +1,6 @@
-use crate::{into_move::IntoMove, move_ref::MoveRef, slot::Slot};
 use core::{mem::MaybeUninit, ops::DerefMut, pin::Pin};
+
+use crate::{into_move::IntoMove, move_ref::MoveRef, slot::Slot};
 
 /// # Safety
 ///
@@ -28,7 +29,10 @@ use core::{mem::MaybeUninit, ops::DerefMut, pin::Pin};
 /// }
 /// ```
 pub unsafe trait DerefMove: DerefMut + IntoMove {
-    fn deref_move<'frame>(self, storage: Slot<'frame, Self::Storage>) -> MoveRef<'frame, Self::Target>
+    fn deref_move<'frame>(
+        self,
+        storage: Slot<'frame, Self::Storage>,
+    ) -> MoveRef<'frame, Self::Target>
     where
         Self: 'frame;
 }
@@ -36,7 +40,10 @@ pub unsafe trait DerefMove: DerefMut + IntoMove {
 #[cfg(feature = "alloc")]
 unsafe impl<T> DerefMove for crate::Box<T> {
     #[inline]
-    fn deref_move<'frame>(self, storage: Slot<'frame, Self::Storage>) -> MoveRef<'frame, Self::Target>
+    fn deref_move<'frame>(
+        self,
+        storage: Slot<'frame, Self::Storage>,
+    ) -> MoveRef<'frame, Self::Target>
     where
         Self: 'frame,
     {
@@ -50,7 +57,10 @@ unsafe impl<T> DerefMove for crate::Box<T> {
 
 unsafe impl<'f, T: ?Sized> DerefMove for MoveRef<'f, T> {
     #[inline]
-    fn deref_move<'frame>(self, _storage: Slot<'frame, Self::Storage>) -> MoveRef<'frame, Self::Target>
+    fn deref_move<'frame>(
+        self,
+        _storage: Slot<'frame, Self::Storage>,
+    ) -> MoveRef<'frame, Self::Target>
     where
         Self: 'frame,
     {
@@ -65,7 +75,10 @@ where
     T: cxx::memory::UniquePtrTarget,
     T: Unpin,
 {
-    fn deref_move<'frame>(self, storage: Slot<'frame, Self::Storage>) -> MoveRef<'frame, Self::Target>
+    fn deref_move<'frame>(
+        self,
+        storage: Slot<'frame, Self::Storage>,
+    ) -> MoveRef<'frame, Self::Target>
     where
         Self: 'frame,
     {

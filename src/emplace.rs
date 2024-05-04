@@ -1,5 +1,6 @@
-use crate::new::{New, TryNew};
 use core::{mem::MaybeUninit, ops::Deref, pin::Pin};
+
+use crate::new::{New, TryNew};
 
 pub trait Emplace<T>: Sized + Deref {
     type Output: Deref<Target = Self::Target>;
@@ -7,8 +8,8 @@ pub trait Emplace<T>: Sized + Deref {
     #[inline]
     fn emplace<N: New<Output = T>>(self, new: N) -> Self::Output {
         match self.try_emplace(new) {
-            Ok(val) => val,
-            Err(err) => match err {},
+            | Ok(val) => val,
+            | Err(err) => match err {},
         }
     }
 

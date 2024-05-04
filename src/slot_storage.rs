@@ -1,5 +1,6 @@
-use crate::slot::Slot;
 use core::{cell::Cell, mem::MaybeUninit};
+
+use crate::slot::Slot;
 
 pub(crate) struct SlotStorageTracker {
     initialized: Cell<bool>,
@@ -154,7 +155,10 @@ impl<T> SlotStorage<T> {
         let _double_panic = DoublePanic;
 
         #[cfg(debug_assertions)]
-        panic!("a critical reference counter at {} was not zeroed!", self.location);
+        panic!(
+            "a critical reference counter at {} was not zeroed!",
+            self.location
+        );
 
         #[cfg(not(debug_assertions))]
         panic!("a critical reference counter was not zeroed!");

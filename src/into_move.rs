@@ -1,10 +1,14 @@
-use crate::{deref_move::DerefMove, move_ref::MoveRef, slot::Slot};
 use core::{mem::MaybeUninit, ops::Deref, pin::Pin};
+
+use crate::{deref_move::DerefMove, move_ref::MoveRef, slot::Slot};
 
 pub trait IntoMove: Deref + Sized {
     type Storage: Sized;
 
-    fn into_move<'frame>(self, storage: Slot<'frame, Self::Storage>) -> Pin<MoveRef<'frame, Self::Target>>
+    fn into_move<'frame>(
+        self,
+        storage: Slot<'frame, Self::Storage>,
+    ) -> Pin<MoveRef<'frame, Self::Target>>
     where
         Self: 'frame;
 }
@@ -14,7 +18,10 @@ impl<T> IntoMove for crate::Box<T> {
     type Storage = crate::Box<MaybeUninit<T>>;
 
     #[inline]
-    fn into_move<'frame>(self, storage: Slot<'frame, Self::Storage>) -> Pin<MoveRef<'frame, Self::Target>>
+    fn into_move<'frame>(
+        self,
+        storage: Slot<'frame, Self::Storage>,
+    ) -> Pin<MoveRef<'frame, Self::Target>>
     where
         Self: 'frame,
     {
@@ -26,7 +33,10 @@ impl<'f, T: ?Sized> IntoMove for MoveRef<'f, T> {
     type Storage = ();
 
     #[inline]
-    fn into_move<'frame>(self, storage: Slot<'frame, Self::Storage>) -> Pin<MoveRef<'frame, Self::Target>>
+    fn into_move<'frame>(
+        self,
+        storage: Slot<'frame, Self::Storage>,
+    ) -> Pin<MoveRef<'frame, Self::Target>>
     where
         Self: 'frame,
     {
@@ -38,7 +48,10 @@ impl<P: DerefMove> IntoMove for Pin<P> {
     type Storage = P::Storage;
 
     #[inline]
-    fn into_move<'frame>(self, storage: Slot<'frame, Self::Storage>) -> Pin<MoveRef<'frame, Self::Target>>
+    fn into_move<'frame>(
+        self,
+        storage: Slot<'frame, Self::Storage>,
+    ) -> Pin<MoveRef<'frame, Self::Target>>
     where
         Self: 'frame,
     {
@@ -85,7 +98,10 @@ where
 {
     type Storage = CxxUniquePtrStorage<T>;
 
-    fn into_move<'frame>(self, storage: Slot<'frame, Self::Storage>) -> Pin<MoveRef<'frame, Self::Target>>
+    fn into_move<'frame>(
+        self,
+        storage: Slot<'frame, Self::Storage>,
+    ) -> Pin<MoveRef<'frame, Self::Target>>
     where
         Self: 'frame,
     {

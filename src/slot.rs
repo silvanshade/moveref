@@ -1,9 +1,10 @@
+use core::{mem::MaybeUninit, pin::Pin};
+
 use crate::{
     move_ref::MoveRef,
     new::{New, TryNew},
     slot_storage::SlotStorageStatus,
 };
-use core::{mem::MaybeUninit, pin::Pin};
 
 pub struct Slot<'frame, T> {
     pub(crate) memory: &'frame mut MaybeUninit<T>,
@@ -14,8 +15,8 @@ impl<'frame, T> Slot<'frame, T> {
     #[inline]
     pub fn emplace<N: New<Output = T>>(self, new: N) -> Pin<MoveRef<'frame, T>> {
         match self.try_emplace(new) {
-            Ok(pin) => pin,
-            Err(err) => match err {},
+            | Ok(pin) => pin,
+            | Err(err) => match err {},
         }
     }
 
@@ -23,7 +24,10 @@ impl<'frame, T> Slot<'frame, T> {
     ///
     /// Should return `Err` if the `new` initializer fails with an error.
     #[inline]
-    pub fn try_emplace<N: TryNew<Output = T>>(self, new: N) -> Result<Pin<MoveRef<'frame, T>>, N::Error> {
+    pub fn try_emplace<N: TryNew<Output = T>>(
+        self,
+        new: N,
+    ) -> Result<Pin<MoveRef<'frame, T>>, N::Error> {
         self.status.initialize();
         unsafe { new.try_new(Pin::new_unchecked(self.memory))? };
         let ptr = unsafe { self.memory.assume_init_mut() };

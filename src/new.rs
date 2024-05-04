@@ -1,5 +1,6 @@
-use crate::{into_move::IntoMove, move_ref::MoveRef};
 use core::{mem::MaybeUninit, pin::Pin};
+
+use crate::{into_move::IntoMove, move_ref::MoveRef};
 
 pub trait New: Sized {
     type Output;

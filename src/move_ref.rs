@@ -1,8 +1,9 @@
-use crate::slot_storage::SlotStorageStatus;
 use core::{
     ops::{Deref, DerefMut},
     pin::Pin,
 };
+
+use crate::slot_storage::SlotStorageStatus;
 
 pub struct MoveRef<'frame, T: ?Sized> {
     pub(crate) ptr: &'frame mut T,
@@ -47,7 +48,10 @@ impl<T: ?Sized> Drop for MoveRef<'_, T> {
 
 impl<'frame, T: ?Sized> MoveRef<'frame, T> {
     #[inline]
-    pub(crate) unsafe fn new_unchecked(ptr: &'frame mut T, status: SlotStorageStatus<'frame>) -> Self {
+    pub(crate) unsafe fn new_unchecked(
+        ptr: &'frame mut T,
+        status: SlotStorageStatus<'frame>,
+    ) -> Self {
         Self { ptr, status }
     }
 

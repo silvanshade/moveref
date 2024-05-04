@@ -18,7 +18,7 @@ jobs:
   cargo-careful:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(awk '/^channel\s*=\s*".*"$/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' rust-toolchain.toml)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -27,7 +27,7 @@ jobs:
           mkdir -p .github/caching
           cargo search cargo-careful | awk '/^cargo-careful/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' > .github/caching/cargo-careful.lock
       - id: cache-cargo-careful
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ runner.tool_cache }}/cargo-careful/bin
           key: cargo-careful-bin-${{ hashFiles('.github/caching/cargo-careful.lock') }}
@@ -46,7 +46,7 @@ jobs:
           - bans licenses sources
     continue-on-error: ${{ matrix.checks == 'advisories' }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
@@ -58,7 +58,7 @@ jobs:
   cargo-fmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(awk '/^channel\s*=\s*".*"$/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' rust-toolchain.toml)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -70,7 +70,7 @@ jobs:
   cargo-clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(awk '/^channel\s*=\s*".*"$/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' rust-toolchain.toml)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -89,7 +89,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo doc --no-deps --package moveref
@@ -105,7 +105,7 @@ jobs:
         os: [macos-latest, ubuntu-latest, windows-latest]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test
@@ -113,7 +113,7 @@ jobs:
   cargo-test-coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(awk '/^channel\s*=\s*".*"$/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' rust-toolchain.toml)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -122,7 +122,7 @@ jobs:
           mkdir -p .github/caching
           cargo search cargo-tarpaulin | awk '/^cargo-tarpaulin/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' > .github/caching/cargo-tarpaulin.lock
       - id: cache-cargo-tarpaulin
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ runner.tool_cache }}/cargo-tarpaulin/bin
           key: cargo-tarpaulin-bin-${{ hashFiles('.github/caching/cargo-tarpaulin.lock') }}
@@ -138,7 +138,7 @@ jobs:
   cargo-miri:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: echo "RUST_NIGHTLY_TOOLCHAIN=$(awk '/^channel\s*=\s*".*"$/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' rust-toolchain.toml)" >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -150,13 +150,13 @@ jobs:
   cargo-valgrind:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - run: |
           mkdir -p .github/caching
           cargo search cargo-valgrind | awk '/^cargo-valgrind/ { print gensub(/"(.*)"/, "\\1", "g", $3); }' > .github/caching/cargo-valgrind.lock
       - id: cache-cargo-valgrind
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ runner.tool_cache }}/cargo-valgrind/bin
           key: cargo-valgrind-bin-${{ hashFiles('.github/caching/cargo-valgrind.lock') }}

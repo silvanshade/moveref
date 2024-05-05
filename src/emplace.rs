@@ -40,9 +40,7 @@ impl<T> Emplace<T> for crate::Rc<T> {
     #[inline]
     fn try_emplace<N: TryNew<Output = T>>(new: N) -> Result<Self::Output, N::Error> {
         let mut uninit = crate::Rc::new(MaybeUninit::<T>::uninit());
-        let Some(ptr) = crate::Rc::get_mut(&mut uninit) else {
-            unreachable!("No pointers to `uninit` exist since it was freshly created")
-        };
+        let ptr = crate::Rc::get_mut(&mut uninit).expect("unreachable: freshly allocated");
         let pin = unsafe { Pin::new_unchecked(ptr) };
         unsafe { new.try_new(pin)? };
         let ptr = unsafe { Self::from_raw(crate::Rc::into_raw(uninit).cast::<T>()) };
@@ -58,13 +56,46 @@ impl<T> Emplace<T> for crate::Arc<T> {
     #[inline]
     fn try_emplace<N: TryNew<Output = T>>(new: N) -> Result<Self::Output, N::Error> {
         let mut uninit = crate::Arc::new(MaybeUninit::<T>::uninit());
-        let Some(ptr) = crate::Arc::get_mut(&mut uninit) else {
-            unreachable!("No pointers to `uninit` exist since it was freshly created")
-        };
+        #[rustfmt::skip]
+        let ptr = crate::Arc::get_mut(&mut uninit).expect("unreachable: freshly allocated");
         let pin = unsafe { Pin::new_unchecked(ptr) };
         unsafe { new.try_new(pin)? };
         let ptr = unsafe { Self::from_raw(crate::Arc::into_raw(uninit).cast::<T>()) };
         let pin = unsafe { Pin::new_unchecked(ptr) };
         return Ok(pin);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    mod coverage {
+        mod emplace {
+            #[cfg(feature = "alloc")]
+            #[test]
+            fn arc() {
+                const VAL: u8 = 128;
+                let new = crate::new::by(move || return VAL);
+                let out = <crate::Arc<_> as crate::Emplace<_>>::emplace(new);
+                assert_eq!(VAL, *out);
+            }
+
+            #[cfg(feature = "alloc")]
+            #[test]
+            fn r#box() {
+                const VAL: u8 = 128;
+                let new = crate::new::by(move || return VAL);
+                let out = <crate::Box<_> as crate::Emplace<_>>::emplace(new);
+                assert_eq!(VAL, *out);
+            }
+
+            #[cfg(feature = "alloc")]
+            #[test]
+            fn rc() {
+                const VAL: u8 = 128;
+                let new = crate::new::by(move || return VAL);
+                let out = <crate::Rc<_> as crate::Emplace<_>>::emplace(new);
+                assert_eq!(VAL, *out);
+            }
+        }
     }
 }

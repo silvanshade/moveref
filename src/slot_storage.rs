@@ -23,7 +23,7 @@ impl SlotStorageTracker {
         return SlotStorageStatus {
             initialized: &self.initialized,
             released: &self.released,
-            references: &self.references,
+            references: &self.references, // tarpaulin
         };
     }
 }
@@ -43,10 +43,11 @@ impl<'frame> SlotStorageStatus<'frame> {
         released: &'frame Cell<bool>,
         references: &'frame Cell<usize>,
     ) -> Self {
+        #[rustfmt::skip]
         return Self {
-            initialized,
-            released,
-            references,
+            initialized, // tarpaulin
+            released,    // tarpaulin
+            references,  // tarpaulin
         };
     }
 
@@ -129,7 +130,7 @@ impl<T> Drop for SlotStorage<T> {
             // NOTE: the only time this should happen is when the `SlotStorage` is created manually,
             // outside the use of the macros, since otherwise the storage is initialized immediately
             // after creation.
-            return;
+            return; // tarpaulin
         }
         if status.is_leaking() {
             self.double_panic();
@@ -145,23 +146,24 @@ impl<T> SlotStorage<T> {
     fn double_panic(&self) {
         struct DoublePanic;
 
-        impl Drop for DoublePanic {
+        #[rustfmt::skip]
+        impl Drop for DoublePanic { // tarpaulin
             #[inline]
             fn drop(&mut self) {
-                assert!(!cfg!(not(test)));
+                assert!(!cfg!(not(test))); // tarpaulin
             }
         }
 
         let _double_panic = DoublePanic;
 
-        #[cfg(debug_assertions)]
+        #[cfg(debug_assertions)] // tarpaulin
         panic!(
             "a critical reference counter at {} was not zeroed!",
-            self.location
+            self.location // tarpaulin
         );
 
-        #[cfg(not(debug_assertions))]
-        panic!("a critical reference counter was not zeroed!");
+        #[cfg(not(debug_assertions))] // tarpaulin
+        panic!("a critical reference counter was not zeroed!"); // tarpaulin
     }
 }
 
@@ -171,10 +173,10 @@ impl<T> SlotStorage<T> {
     #[inline]
     pub const fn new(kind: SlotStorageKind) -> Self {
         return Self {
-            kind,
-            memory: MaybeUninit::uninit(),
+            kind,                          // tarpaulin
+            memory: MaybeUninit::uninit(), // tarpaulin
             tracker: SlotStorageTracker::new(),
-            #[cfg(debug_assertions)]
+            #[cfg(debug_assertions)]       // tarpaulin
             location: core::panic::Location::caller(),
         };
     }
@@ -185,5 +187,21 @@ impl<T> SlotStorage<T> {
         let memory = &mut self.memory;
         let status = self.tracker.status();
         return Slot { memory, status };
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::*;
+
+    mod coverage {
+        use super::*;
+
+        #[test]
+        fn slot_storage_drop() {
+            let kind = SlotStorageKind::Drop;
+            let storage = SlotStorage::<()>::new(kind);
+            drop(storage);
+        }
     }
 }

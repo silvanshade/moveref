@@ -37,7 +37,7 @@ impl<N: New> TryNew for N {
 
     unsafe fn try_new(self, this: Pin<&mut MaybeUninit<Self::Output>>) -> Result<(), Self::Error> {
         self.new(this);
-        return Ok(());
+        return Ok(()); // tarpaulin
     }
 }
 
@@ -70,11 +70,12 @@ where
         _type: core::marker::PhantomData<fn(Pin<&mut MaybeUninit<T>>)>,
     }
 
-    impl<F, T> New for FnNew<F, T>
+    #[rustfmt::skip]
+    impl<F, T> New for FnNew<F, T> // tarpaulin
     where
         F: FnOnce(Pin<&mut MaybeUninit<T>>),
     {
-        type Output = T;
+        type Output = T; // tarpaulin
         #[inline]
         unsafe fn new(self, this: Pin<&mut MaybeUninit<Self::Output>>) {
             (self.initializer)(this);
@@ -82,8 +83,8 @@ where
     }
 
     return FnNew {
-        initializer,
-        _type: core::marker::PhantomData,
+        initializer,                      // tarpaulin
+        _type: core::marker::PhantomData, // tarpaulin
     };
 }
 
@@ -113,13 +114,14 @@ where
     P::Target: MoveNew,
 {
     unsafe {
+        #[rustfmt::skip] // tarpaulin
         return by_raw(move |dst| {
-            bind_slot!(
-                #[dropping]
-                storage
+            bind_slot!(      // tarpaulin
+                #[dropping]  // tarpaulin
+                storage      // tarpaulin
             );
-            let src = ptr.into_move(storage);
-            MoveNew::move_new(src, dst);
+            let src = ptr.into_move(storage); // tarpaulin
+            MoveNew::move_new(src, dst);      // tarpaulin
         });
     }
 }

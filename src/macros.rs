@@ -124,3 +124,39 @@ macro_rules! trivial_move {
         )*
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::*;
+
+    mod macros {
+        use super::*;
+
+        const VAL: bool = true;
+
+        #[test]
+        fn deref_move_expr() {
+            assert_eq!(VAL, *expr!(&move *Box::new(VAL)));
+        }
+
+        #[test]
+        fn trivial_copy() {
+            let this = &true;
+            let that = ::core::mem::MaybeUninit::uninit();
+            let mut that = ::core::pin::pin!(that);
+            unsafe { new::CopyNew::copy_new(this, that.as_mut()) };
+            let that = unsafe { that.assume_init() };
+            assert_eq!(this, &that);
+        }
+
+        #[test]
+        fn trivial_move() {
+            bind!(this = new::of(VAL));
+            let that = ::core::mem::MaybeUninit::uninit();
+            let mut that = ::core::pin::pin!(that);
+            unsafe { new::MoveNew::move_new(this, that.as_mut()) };
+            let that = unsafe { that.assume_init() };
+            assert_eq!(VAL, that);
+        }
+    }
+}

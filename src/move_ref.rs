@@ -39,7 +39,7 @@ impl<T: ?Sized> Drop for MoveRef<'_, T> {
     #[inline]
     fn drop(&mut self) {
         if self.status.is_released() {
-            return;
+            return; // tarpaulin
         }
         self.status.terminate();
         unsafe { core::ptr::drop_in_place(self.ptr) }
@@ -58,13 +58,13 @@ impl<'frame, T: ?Sized> MoveRef<'frame, T> {
     #[must_use]
     #[inline]
     pub fn into_pin(self) -> Pin<Self> {
-        return unsafe { Pin::new_unchecked(self) };
+        return unsafe { Pin::new_unchecked(self) }; // tarpaulin
     }
 
     #[inline]
     #[must_use]
     pub fn release(pin: Pin<Self>) -> *mut T {
-        let mov = unsafe { Pin::into_inner_unchecked(pin) };
+        let mov = unsafe { Pin::into_inner_unchecked(pin) }; // tarpaulin
         unsafe { mov.status.release() };
         return mov.ptr;
     }
@@ -74,7 +74,7 @@ impl<'frame, T> MoveRef<'frame, T> {
     #[must_use]
     #[inline]
     pub fn into_inner(self) -> T {
-        let pin = unsafe { Pin::new_unchecked(self) };
+        let pin = unsafe { Pin::new_unchecked(self) }; // tarpaulin
         let ptr = MoveRef::release(pin);
         return unsafe { core::ptr::read(ptr) };
     }
@@ -158,7 +158,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::MoveRef;
+    use super::*;
+    use crate::*;
 
     #[cfg(feature = "alloc")]
     #[test]
@@ -223,5 +224,118 @@ mod test {
         let val = T;
         bind!(t = crate::new::of(val));
         let _ = MoveRef::release(t);
+    }
+
+    mod coverage {
+        use super::*;
+
+        mod move_ref {
+            use super::*;
+
+            const VAL1: &str = "value1";
+            const VAL2: &str = "value2";
+
+            #[test]
+            fn as_ptr() {
+                bind!(val = &move *Box::new(VAL1));
+                let ptr = val.as_ptr();
+                assert_eq!(VAL1, unsafe { *ptr });
+            }
+
+            #[test]
+            fn as_mut_ptr() {
+                bind!(mut val = &move *Box::new(VAL1));
+                let ptr = val.as_mut_ptr();
+                assert_eq!(VAL1, unsafe { *ptr });
+                unsafe { ptr.write(VAL2) };
+                assert_eq!(VAL2, unsafe { *ptr });
+            }
+
+            #[test]
+            fn deref_mut() {
+                bind!(mut val = &move VAL1);
+                assert_eq!(VAL1, *val);
+                *val = VAL2;
+                assert_eq!(VAL2, *val);
+            }
+
+            #[test]
+            fn fmt() {
+                use crate::alloc::format;
+                bind!(val = &move VAL1);
+                assert_eq!(format!("{VAL1:#?}"), format!("{val:#?}"));
+            }
+
+            #[test]
+            fn partial_eq() {
+                bind!(lhs = &move VAL1);
+                bind!(rhs = &move VAL1);
+                assert!(lhs.eq(&rhs));
+            }
+
+            #[test]
+            fn partial_cmp() {
+                bind!(lhs = &move VAL1);
+                bind!(rhs = &move VAL1);
+                assert!(matches!(
+                    lhs.partial_cmp(&rhs),
+                    Some(core::cmp::Ordering::Equal)
+                ));
+            }
+
+            #[test]
+            fn lt() {
+                bind!(lhs = &move VAL1);
+                bind!(rhs = &move VAL2);
+                assert!(lhs.lt(&rhs));
+            }
+
+            #[test]
+            fn le() {
+                bind!(lhs = &move VAL1);
+                bind!(rhs = &move VAL2);
+                assert!(lhs.le(&rhs));
+            }
+
+            #[test]
+            fn gt() {
+                bind!(lhs = &move VAL2);
+                bind!(rhs = &move VAL1);
+                assert!(lhs.gt(&rhs));
+            }
+
+            #[test]
+            fn ge() {
+                bind!(lhs = &move VAL2);
+                bind!(rhs = &move VAL1);
+                assert!(lhs.ge(&rhs));
+            }
+
+            #[test]
+            fn cmp() {
+                bind!(lhs = &move VAL1);
+                bind!(rhs = &move VAL2);
+                assert!(matches!(lhs.cmp(&rhs), core::cmp::Ordering::Less));
+            }
+
+            #[cfg(feature = "default")]
+            #[test]
+            fn hash() {
+                use core::hash::{Hash, Hasher};
+                bind!(lhs = &move VAL1);
+                let hash1 = {
+                    let mut hasher = seahash::SeaHasher::new();
+                    lhs.hash(&mut hasher);
+                    hasher.finish()
+                };
+                bind!(rhs = &move VAL1);
+                let hash2 = {
+                    let mut hasher = seahash::SeaHasher::new();
+                    rhs.hash(&mut hasher);
+                    hasher.finish()
+                };
+                assert_eq!(hash1, hash2);
+            }
+        }
     }
 }

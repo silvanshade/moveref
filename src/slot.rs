@@ -44,7 +44,7 @@ impl<'frame, T> Slot<'frame, T> {
     #[inline]
     pub fn put(self, val: T) -> MoveRef<'frame, T> {
         let pin = self.pin(val);
-        return unsafe { Pin::into_inner_unchecked(pin) };
+        return unsafe { Pin::into_inner_unchecked(pin) }; // tarpaulin
     }
 
     #[inline]

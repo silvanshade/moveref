@@ -60,3 +60,47 @@ impl<P: DerefMove> IntoMove for Pin<P> {
         return MoveRef::into_pin(this);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    mod coverage {
+        use super::*;
+
+        mod into_move {
+            use super::*;
+
+            const VAL: &str = "value";
+
+            #[cfg(feature = "alloc")]
+            #[test]
+            fn r#box() {
+                let kind = SlotStorageKind::Drop;
+                let mut storage = SlotStorage::new(kind);
+                let slot = storage.slot();
+                let mref = IntoMove::into_move(Box::new(VAL), slot);
+                assert_eq!(VAL, *mref);
+            }
+
+            #[test]
+            fn move_ref() {
+                let kind = SlotStorageKind::Drop;
+                let mut storage = SlotStorage::new(kind);
+                let slot = storage.slot();
+                bind!(val: MoveRef<&str> = &move VAL);
+                let mref = IntoMove::into_move(val, slot);
+                assert_eq!(VAL, *mref);
+            }
+
+            #[test]
+            fn pin() {
+                let kind = SlotStorageKind::Drop;
+                let mut storage = SlotStorage::new(kind);
+                let slot = storage.slot();
+                let mref = IntoMove::into_move(Box::pin(VAL), slot);
+                assert_eq!(VAL, *mref);
+            }
+        }
+    }
+}

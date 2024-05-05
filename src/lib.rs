@@ -3,10 +3,13 @@
 #![deny(clippy::implicit_return)]
 #![deny(clippy::nursery)]
 #![deny(clippy::pedantic)]
+#![deny(clippy::missing_docs_in_private_items)]
 #![allow(clippy::needless_return)]
 #![allow(clippy::redundant_pub_crate)]
 #![allow(clippy::type_repetition_in_bounds)]
 #![no_std]
+
+//! Types and traits for C++ style placement initialization and move semantics.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -14,15 +17,23 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 pub(crate) use alloc::{boxed::Box, rc::Rc, sync::Arc};
 
+/// Macros for creating [`crate::MoveRef`] values.
 #[macro_use]
 mod macros;
 
+/// Dereferencing move operations.
 mod deref_move;
+/// Emplacement operations for constructing values.
 mod emplace;
+/// Movement operations.
 mod into_move;
+/// Move-dereferencing uniquely-owning references.
 mod move_ref;
+/// Construction operations.
 pub mod new;
+/// Storage slots for move-references.
 mod slot;
+/// Storage slot implementation details.
 mod slot_storage;
 
 pub use deref_move::DerefMove;

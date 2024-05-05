@@ -5,8 +5,46 @@ use core::{
 
 use crate::slot_storage::SlotStorageStatus;
 
+/// A "reference" type which *uniquely* owns its referent type `T` with respect to external storage
+/// with lifetime `'frame`.
+///
+/// Conceptually, it has these characteristics:
+///
+/// - similar to `&'frame mut` because it *uniquely* references other data with lifetime `'frame`
+/// - similar to `Box` because it is *owning*
+///
+/// The distinguishing characteristic of [`MoveRef`] from `&mut` and [`Box`](crate::Box) is how it
+/// is created with a backing storage [`Slot`](crate::Slot) and how that defines its ownership of
+/// the referent data, and ultimately how the backing storage is responsible for running the
+/// destructor for its referent when it finally goes out of scope.
+///
+/// A motivating example for [`MoveRef`] is the concept of placement-initialization in C++:
+///
+/// Imagine we define FFI bindings for a C++ class we intend to use in Rust.
+///
+/// Creating instances for this class on the heap is straightforward and well understood: we can use
+/// raw pointers and eventually either convert to a reference or [`Box`](crate::Box).
+///
+/// Creating instances for this class on the stack is more difficult. We can use
+/// [`MaybeUninit`](core::mem::MaybeUninit) to create a chunk of data and initialize into that.
+///
+/// But we have to be particularly careful when using the result because in Rust, data moves by
+/// default, rather than copies by default as in C++. So any access of the data in Rust could
+/// potentially move the data out from under some expected location in C++ and cause a crash when
+/// execution proceeds again in C++.
+///
+/// So we need a type which acts like a (mutable) reference but does not let us move simply by
+/// accessing it. This would be similar to a [`Pin<&mut T>`], where the [`Pin`] prevents movement,
+/// but the inner `&mut` still allows mutation.
+///
+/// But we also want the possibility to *actually* move the data in some cases, like we would
+/// explicitly do in C++ with a move constructor or move assignment operation.
+///
+/// This interface is exactly what [`MoveRef`] provides, along with [`DerefMove`](crate::DerefMove).
 pub struct MoveRef<'frame, T: ?Sized> {
+    /// The underlying mutable reference with referent stored in some external [`Slot`](crate::Slot).
     pub(crate) ptr: &'frame mut T,
+    /// Status flags for the storage which track initialization, dropping state, and reference count.
     pub(crate) status: SlotStorageStatus<'frame>,
 }
 
@@ -47,6 +85,7 @@ impl<T: ?Sized> Drop for MoveRef<'_, T> {
 }
 
 impl<'frame, T: ?Sized> MoveRef<'frame, T> {
+    /// Create a new unchecked [`MoveRef`] from a mutable ref and [`SlotStorageStatus`].
     #[inline]
     pub(crate) unsafe fn new_unchecked(
         ptr: &'frame mut T,
@@ -55,12 +94,18 @@ impl<'frame, T: ?Sized> MoveRef<'frame, T> {
         return Self { ptr, status };
     }
 
+    /// Transform a [`MoveRef<T>`] into a [`Pin<MoveRef<T>>`]. This is safe because the interface
+    /// for [`MoveRef`] enforces that its referent will not be implicitly moved or have its storage
+    /// invalidated until the [`MoveRef<T>`] (and its backing [`Slot`](crate::Slot)) is dropped.
     #[must_use]
     #[inline]
     pub fn into_pin(self) -> Pin<Self> {
         return unsafe { Pin::new_unchecked(self) }; // tarpaulin
     }
 
+    /// Consume a [`Pin<Self>`] and return a raw `*mut T`. This operation inhibits destruction of
+    /// `T` by implicit [`Drop`] and the caller becomes responsible for eventual explicit
+    /// destruction and cleanup, otherwise the memory will leak.
     #[inline]
     #[must_use]
     pub fn release(pin: Pin<Self>) -> *mut T {

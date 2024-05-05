@@ -2,13 +2,18 @@ use core::{cell::Cell, mem::MaybeUninit};
 
 use crate::slot::Slot;
 
+/// State for tracking the status of a storage [`Slot`].
 pub(crate) struct SlotStorageTracker {
+    /// Whether the [`Slot`] is initialized.
     initialized: Cell<bool>,
+    /// Whether the [`Slot`] is released. If released, [`Drop`] will be skipped.
     released: Cell<bool>,
+    /// Number of references to the [`Slot`]. Used for checking various conditions.
     references: Cell<usize>,
 }
 
 impl SlotStorageTracker {
+    /// Construct a new [`SlotStorageTracker`].
     #[inline]
     pub const fn new() -> Self {
         return Self {
@@ -18,6 +23,7 @@ impl SlotStorageTracker {
         };
     }
 
+    /// Project the the status by borrowing the internal state.
     #[inline]
     pub const fn status(&self) -> SlotStorageStatus<'_> {
         return SlotStorageStatus {
@@ -28,35 +34,19 @@ impl SlotStorageTracker {
     }
 }
 
+/// The borrowed form of [`SlotStorageTracker`].
 #[derive(Clone, Copy)]
 pub(crate) struct SlotStorageStatus<'frame> {
+    /// Whether the [`Slot`] is initialized.
     initialized: &'frame Cell<bool>,
+    /// Whether the [`Slot`] is released. If released, [`Drop`] will be skipped.
     released: &'frame Cell<bool>,
+    /// Number of references to the [`Slot`]. Used for checking various conditions.
     references: &'frame Cell<usize>,
 }
 
 impl<'frame> SlotStorageStatus<'frame> {
-    #[allow(unused)] // NOTE: used (indirectly) in macros
-    #[inline]
-    pub(crate) const fn new(
-        initialized: &'frame Cell<bool>,
-        released: &'frame Cell<bool>,
-        references: &'frame Cell<usize>,
-    ) -> Self {
-        #[rustfmt::skip]
-        return Self {
-            initialized, // tarpaulin
-            released,    // tarpaulin
-            references,  // tarpaulin
-        };
-    }
-
-    #[inline]
-    pub(crate) fn increment(&self) {
-        debug_assert!(self.references_are_zeroed());
-        self.references.set(self.references.get() + 1);
-    }
-
+    /// Set the status to initialized.
     #[inline]
     pub(crate) fn initialize(&self) {
         debug_assert!(!self.is_initialized());
@@ -64,66 +54,89 @@ impl<'frame> SlotStorageStatus<'frame> {
         self.increment();
     }
 
+    /// Increment the reference count.
+    #[inline]
+    pub(crate) fn increment(&self) {
+        debug_assert!(self.is_reference_zeroed());
+        self.references.set(self.references.get() + 1);
+    }
+
+    /// Decrement the reference count.
     #[inline]
     pub(crate) fn decrement(&self) {
-        debug_assert!(!self.references_are_zeroed());
+        debug_assert!(!self.is_reference_zeroed());
         self.references.set(self.references.get() - 1);
     }
 
-    #[inline]
-    pub(crate) fn is_leaking(&self) -> bool {
-        return !self.is_released() && self.is_initialized() && !self.references_are_zeroed();
-    }
-
-    #[inline]
-    pub(crate) fn is_initialized(&self) -> bool {
-        return self.initialized.get();
-    }
-
-    #[inline]
-    pub(crate) fn is_uninitialized(&self) -> bool {
-        return self.references_are_zeroed() && !self.is_initialized();
-    }
-
-    #[inline]
-    pub(crate) fn is_released(&self) -> bool {
-        return self.released.get();
-    }
-
-    #[inline]
-    pub(crate) fn references_are_zeroed(&self) -> bool {
-        return self.references.get() == 0;
-    }
-
+    /// Mark the storage as released. Once marked as released, [`Drop`] will be skipped.
     #[inline]
     pub(crate) unsafe fn release(&self) {
         self.released.set(true);
     }
 
+    /// Mark the storage as terminated. This is just a decrement followed by an assertion that
+    /// references are finally zeroed. It is intended to be called only when the storage is dropped.
+    #[inline]
     pub(crate) fn terminate(&self) {
         self.decrement();
-        debug_assert!(self.references_are_zeroed());
+        debug_assert!(self.is_reference_zeroed());
+    }
+
+    /// Check if the storage is initialized.
+    #[inline]
+    pub(crate) fn is_initialized(&self) -> bool {
+        return self.initialized.get();
+    }
+
+    /// Check if the storage is uninitialized.
+    #[inline]
+    pub(crate) fn is_uninitialized(&self) -> bool {
+        return self.is_reference_zeroed() && !self.is_initialized();
+    }
+
+    /// Check if the storage is released.
+    #[inline]
+    pub(crate) fn is_released(&self) -> bool {
+        return self.released.get();
+    }
+
+    /// Check if the storage is leaking.
+    #[inline]
+    pub(crate) fn is_leaking(&self) -> bool {
+        return !self.is_released() && self.is_initialized() && !self.is_reference_zeroed();
+    }
+
+    /// Check if the references are zeroed.
+    #[inline]
+    pub(crate) fn is_reference_zeroed(&self) -> bool {
+        return self.references.get() == 0;
     }
 }
 
+/// Kind dictacting whether the storage should drop its referent when leaving scope.
 #[allow(clippy::module_name_repetitions)]
-#[allow(unused)] // NOTE: used in macros
 #[derive(Copy, Clone, Debug)]
 pub enum SlotStorageKind {
+    /// The storage should drop its referent.
     Drop,
+    /// The storage should not drop its referent.
     Keep,
 }
 
+/// Type used for constructing the storage for a [`Slot`] backing a [`MoveRef`](crate::MoveRef).
 pub struct SlotStorage<T> {
+    /// The kind dictating the storage drop behavior.
     kind: SlotStorageKind,
+    /// The raw underlying (possibily uninitialized) storage memory.
     memory: MaybeUninit<T>,
+    /// Status flags for the storage which track initialization, dropping state, and reference count.
     tracker: SlotStorageTracker,
+    /// Location for reporting panic data.
     #[cfg(debug_assertions)]
     location: &'static core::panic::Location<'static>,
 }
 
 impl<T> Drop for SlotStorage<T> {
-    #[inline]
     fn drop(&mut self) {
         let status = self.tracker.status();
         if status.is_uninitialized() {
@@ -133,7 +146,7 @@ impl<T> Drop for SlotStorage<T> {
             return; // tarpaulin
         }
         if status.is_leaking() {
-            self.double_panic();
+            self.non_unwinding_panic_abort();
         }
         if matches!(self.kind, SlotStorageKind::Drop) {
             unsafe { self.memory.assume_init_drop() }
@@ -142,34 +155,8 @@ impl<T> Drop for SlotStorage<T> {
 }
 
 impl<T> SlotStorage<T> {
-    #[inline]
-    fn double_panic(&self) {
-        struct DoublePanic;
-
-        #[rustfmt::skip]
-        impl Drop for DoublePanic { // tarpaulin
-            #[inline]
-            fn drop(&mut self) {
-                assert!(!cfg!(not(test))); // tarpaulin
-            }
-        }
-
-        let _double_panic = DoublePanic;
-
-        #[cfg(debug_assertions)] // tarpaulin
-        panic!(
-            "a critical reference counter at {} was not zeroed!",
-            self.location // tarpaulin
-        );
-
-        #[cfg(not(debug_assertions))] // tarpaulin
-        panic!("a critical reference counter was not zeroed!"); // tarpaulin
-    }
-}
-
-impl<T> SlotStorage<T> {
+    /// Construct a new [`SlotStorage<T>`] given a `kind`.
     #[must_use]
-    #[allow(unused)] // NOTE: used in macros
     #[inline]
     pub const fn new(kind: SlotStorageKind) -> Self {
         return Self {
@@ -181,12 +168,52 @@ impl<T> SlotStorage<T> {
         };
     }
 
-    #[allow(unused)] // NOTE: used in macros
+    /// Project the [`Slot`] for the storage.
     #[inline]
     pub fn slot(&mut self) -> Slot<'_, T> {
         let memory = &mut self.memory;
         let status = self.tracker.status();
         return Slot { memory, status };
+    }
+
+    #[inline]
+    pub fn display_location(&self) -> &dyn core::fmt::Display {
+        /// Placeholder location display.
+        const UNKNOWN: &str = "<unknown>";
+
+        if cfg!(debug_assertions) {
+            return self.location;
+        }
+        return &UNKNOWN; // tarpaulin
+    }
+
+    /// Force an abort by triggering a panic mid-unwind.
+    ///
+    /// This is one way to force an LLVM abort from inside of `core` without using
+    /// [`core::intrinsics::abort`] which requires `nightly`.
+    fn non_unwinding_panic_abort(&self) {
+        /// Helper type for triggering the double-panic by panicking on drop.
+        struct DropAndPanic;
+
+        #[rustfmt::skip]
+        impl Drop for DropAndPanic { // tarpaulin
+            #[inline]
+            fn drop(&mut self) {
+                #[allow(clippy::manual_assert)] // tarpaulin
+                if cfg!(not(test)) {
+                    panic!("initiating double-panic to trigger an LLVM abort") // tarpaulin
+                }
+            }
+        }
+
+        // Trigger the first panic.
+        let _first_panic_trigger = DropAndPanic;
+
+        // Trigger the second panic mid-unwind.
+        panic!(
+            "a critical reference counter at {} was not zeroed!",
+            self.display_location() // tarpaulin
+        );
     }
 }
 

@@ -1,3 +1,24 @@
+/// Macro for binding a variable to a fresh [`MoveRef`](crate::MoveRef).
+///
+/// - `bind!(x = &move *ptr)` creates an `x: MoveRef<T>` given `ptr: impl (DerefMove +
+///   DerefMut<Target = T>)`
+///
+/// The above invocation moves the referent of a *uniquely* owning poiner into a fresh
+/// [`MoveRef`](crate::MoveRef) bound to `x`.
+///
+/// - `bind!(x = &move val)` creates an `x: MoveRef<T>` given `val: T`
+///
+/// The above invocation moves any value into a fresh [`MoveRef`](crate::MoveRef) bound to `x`.
+///
+/// - `bind!(x = con)` creates an `x: Pin<MoveRef<T>>` given `con: impl New<Output = T>`
+///
+/// The above invocaton constructs a [`New`](crate::New) value into a fresh
+/// [`MoveRef`](crate::MoveRef) bound to `x`.
+///
+/// - `bind!(mut x: T = ...)` (with right-hand side of `&move *ptr` or `&move val` or `con`)
+///
+/// The above generalization can be used with any earlier invocation form to add mutability and
+/// typing annotations.
 #[macro_export]
 macro_rules! bind {
     (mut $name:ident $(: $ty:ty)? = &move *$expr:expr) => {
@@ -33,10 +54,40 @@ macro_rules! bind {
     };
 }
 
+/// Macro for creating a fresh [`MoveRef`](crate::MoveRef) expression.
+///
+/// Because a `v: MoveRef<'frame, T>` always has an associated lifetime `'frame`, this macro can
+/// generally only be used where it would be immediately consumed by some enclosing expression, such
+/// as in the position of a function argument.
+///
+/// Trying to use this as `let v = expr!(...)` will not work because the lifetime `'frame` will not
+/// expand to the enclosing let binding. Hence the need for the separate `bind!(v = ...)` macro.
+///
+/// Otherwise, the usage is generally the same as `bind!(...)`:
+///
+/// - `expr!(&move *ptr)` creates a `MoveRef<T>` given `ptr: impl (DerefMove +
+///   DerefMut<Target = T>)`
+///
+/// The above invocation moves the referent of a *uniquely* owning poiner into a fresh
+/// [`MoveRef`](crate::MoveRef).
+///
+/// - `expr!(&move val)` creates an `MoveRef<T>` given `val: T`
+///
+/// The above invocation moves any value into a fresh [`MoveRef`](crate::MoveRef).
+///
+/// - `expr!(con)` creates an `x: Pin<MoveRef<T>>` given `con: impl New<Output = T>`
+///
+/// The above invocaton constructs a [`New`](crate::New) value into a fresh
+/// [`MoveRef`](crate::MoveRef).
 #[macro_export]
 macro_rules! expr {
     (&move *$expr:expr) => {
-        $crate::DerefMove::deref_move($expr, $crate::expr_slot!(#[dropping]))
+        $crate::DerefMove::deref_move(
+            $expr,
+            $crate::expr_slot!(
+                #[dropping]
+            )
+        )
     };
     (&move $expr:expr) => {
         $crate::expr_slot!().put($expr)
@@ -46,18 +97,19 @@ macro_rules! expr {
     };
 }
 
-#[macro_export]
-macro_rules! expr_slot {
-    (#[dropping]) => {{
-        let kind = $crate::SlotStorageKind::Drop;
-        $crate::SlotStorage::new(kind).slot()
-    }};
-    () => {{
-        let kind = $crate::SlotStorageKind::Keep;
-        $crate::SlotStorage::new(kind).slot()
-    }};
-}
-
+/// Macro for binding a variable to a fresh [`Slot`](crate::Slot) for storage of a
+/// [`MoveRef`](crate::MoveRef).
+///
+/// - `bind_slot!(x)`
+///
+/// The above invocation binds a slot to the variable `x`.
+///
+/// - `bind_slot!(#[dropping] x)`
+///
+/// The above invocation binds a (dropping) slot to the variable `x`. A [`MoveRef`](crate::MoveRef)
+/// using `x` as backing storage will drop its referent when `x` goes out of scope.
+///
+/// Both of the above invocation forms also allow typing annotations on `x` as with [`bind!`].
 #[macro_export]
 macro_rules! bind_slot {
     (#[dropping] $($name:ident : $ty:ty),* $(,)?) => {
@@ -90,6 +142,22 @@ macro_rules! bind_slot {
     };
 }
 
+/// Macro for creating a fresh [`Slot`](crate::Slot) expression.
+///
+/// This macro has the same relationship to [`bind_slot!`] as [`expr!`] does to [`bind!`].
+#[macro_export]
+macro_rules! expr_slot {
+    (#[dropping]) => {{
+        let kind = $crate::SlotStorageKind::Drop;
+        $crate::SlotStorage::new(kind).slot()
+    }};
+    () => {{
+        let kind = $crate::SlotStorageKind::Keep;
+        $crate::SlotStorage::new(kind).slot()
+    }};
+}
+
+/// Boilerplate macro for defining trivial [`CopyNew`](crate::CopyNew) instances.
 macro_rules! trivial_copy {
     ($($ty:ty $(where [$($targs:tt)*])?),* $(,)?) => {
         $(
@@ -107,6 +175,7 @@ macro_rules! trivial_copy {
     }
 }
 
+/// Boilerplate macro for defining trivial [`MoveNew`](crate::CopyNew) instances.
 macro_rules! trivial_move {
     ($($ty:ty $(where [$($targs:tt)*])?),* $(,)?) => {
         $(

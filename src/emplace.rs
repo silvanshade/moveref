@@ -2,9 +2,11 @@ use core::{mem::MaybeUninit, ops::Deref, pin::Pin};
 
 use crate::new::{New, TryNew};
 
+/// Operations for constructing [`New`] values into a `Self::Output` instance.
 pub trait Emplace<T>: Sized + Deref {
     type Output: Deref<Target = Self::Target>;
 
+    /// Construct a [`New`] value into a fresh `Self::Output` instance.
     #[inline]
     fn emplace<N: New<Output = T>>(new: N) -> Self::Output {
         match Self::try_emplace(new) {
@@ -13,6 +15,8 @@ pub trait Emplace<T>: Sized + Deref {
         }
     }
 
+    /// Try to construct a [`New`] value into a fresh `Self::Output` instance.
+    ///
     /// # Errors
     ///
     /// Should return `Err` if the `new` initializer fails with an error.

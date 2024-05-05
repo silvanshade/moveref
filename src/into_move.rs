@@ -2,9 +2,12 @@ use core::{mem::MaybeUninit, ops::Deref, pin::Pin};
 
 use crate::{deref_move::DerefMove, move_ref::MoveRef, slot::Slot};
 
+/// A trait for transforming a [`Deref`] type into a pinned [`MoveRef`] with respect to a specified
+/// backing storage type [`IntoMove::Storage`].
 pub trait IntoMove: Deref + Sized {
     type Storage: Sized;
 
+    /// Consume `self` and create a pinned [`MoveRef`] with `self`'s contents placed into `storage`.
     fn into_move<'frame>(
         self,
         storage: Slot<'frame, Self::Storage>,

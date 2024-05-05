@@ -6,12 +6,16 @@ use crate::{
     slot_storage::SlotStorageStatus,
 };
 
+/// Backing storage for a [`MoveRef`].
 pub struct Slot<'frame, T> {
+    /// The raw underlying (possibily uninitialized) storage memory.
     pub(crate) memory: &'frame mut MaybeUninit<T>,
+    /// Status flags for the storage which track initialization, dropping state, and reference count.
     pub(crate) status: SlotStorageStatus<'frame>,
 }
 
 impl<'frame, T> Slot<'frame, T> {
+    /// Construct and pin `new` into the slot and return the associated owning [`MoveRef`].
     #[inline]
     pub fn emplace<N: New<Output = T>>(self, new: N) -> Pin<MoveRef<'frame, T>> {
         match self.try_emplace(new) {
@@ -20,6 +24,8 @@ impl<'frame, T> Slot<'frame, T> {
         }
     }
 
+    /// Try to construct and pin `new` into the slot and return the associated owning [`MoveRef`].
+    ///
     /// # Errors
     ///
     /// Should return `Err` if the `new` initializer fails with an error.
@@ -36,17 +42,20 @@ impl<'frame, T> Slot<'frame, T> {
         return Ok(pin);
     }
 
+    /// Move and pin `val` into the slot and return the associated owning [`MoveRef`].
     #[inline]
     pub fn pin(self, val: T) -> Pin<MoveRef<'frame, T>> {
         return self.emplace(crate::new::of(val));
     }
 
+    /// Move `val` into the slot and return the associated owning [`MoveRef`].
     #[inline]
     pub fn put(self, val: T) -> MoveRef<'frame, T> {
         let pin = self.pin(val);
         return unsafe { Pin::into_inner_unchecked(pin) }; // tarpaulin
     }
 
+    /// Write `val` into the slot and returns a `&mut ref` to its location and its storage status.
     #[inline]
     pub(crate) fn write(self, val: T) -> (&'frame mut T, SlotStorageStatus<'frame>) {
         self.status.initialize();

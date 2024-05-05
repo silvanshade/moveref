@@ -6,8 +6,8 @@ pub trait Emplace<T>: Sized + Deref {
     type Output: Deref<Target = Self::Target>;
 
     #[inline]
-    fn emplace<N: New<Output = T>>(self, new: N) -> Self::Output {
-        match self.try_emplace(new) {
+    fn emplace<N: New<Output = T>>(new: N) -> Self::Output {
+        match Self::try_emplace(new) {
             | Ok(val) => return val,
             | Err(err) => match err {},
         }
@@ -16,7 +16,7 @@ pub trait Emplace<T>: Sized + Deref {
     /// # Errors
     ///
     /// Should return `Err` if the `new` initializer fails with an error.
-    fn try_emplace<N: TryNew<Output = T>>(self, new: N) -> Result<Self::Output, N::Error>;
+    fn try_emplace<N: TryNew<Output = T>>(new: N) -> Result<Self::Output, N::Error>;
 }
 
 #[cfg(feature = "alloc")]
@@ -24,7 +24,7 @@ impl<T> Emplace<T> for crate::Box<T> {
     type Output = Pin<Self>;
 
     #[inline]
-    fn try_emplace<N: TryNew<Output = T>>(self, new: N) -> Result<Self::Output, N::Error> {
+    fn try_emplace<N: TryNew<Output = T>>(new: N) -> Result<Self::Output, N::Error> {
         let mut uninit = crate::Box::new(MaybeUninit::<T>::uninit());
         let pin = unsafe { Pin::new_unchecked(&mut *uninit) };
         unsafe { new.try_new(pin)? };
@@ -38,7 +38,7 @@ impl<T> Emplace<T> for crate::Rc<T> {
     type Output = Pin<Self>;
 
     #[inline]
-    fn try_emplace<N: TryNew<Output = T>>(self, new: N) -> Result<Self::Output, N::Error> {
+    fn try_emplace<N: TryNew<Output = T>>(new: N) -> Result<Self::Output, N::Error> {
         let mut uninit = crate::Rc::new(MaybeUninit::<T>::uninit());
         let Some(ptr) = crate::Rc::get_mut(&mut uninit) else {
             unreachable!("No pointers to `uninit` exist since it was freshly created")
@@ -56,7 +56,7 @@ impl<T> Emplace<T> for crate::Arc<T> {
     type Output = Pin<Self>;
 
     #[inline]
-    fn try_emplace<N: TryNew<Output = T>>(self, new: N) -> Result<Self::Output, N::Error> {
+    fn try_emplace<N: TryNew<Output = T>>(new: N) -> Result<Self::Output, N::Error> {
         let mut uninit = crate::Arc::new(MaybeUninit::<T>::uninit());
         let Some(ptr) = crate::Arc::get_mut(&mut uninit) else {
             unreachable!("No pointers to `uninit` exist since it was freshly created")

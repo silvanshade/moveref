@@ -339,6 +339,51 @@
 <a href="#339" id="339">339</a>
 <a href="#340" id="340">340</a>
 <a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{
     ops::{Deref, DerefMut},
     pin::Pin,
@@ -346,9 +391,47 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::slot_storage::SlotStorageStatus;
 
-<span class="kw">pub struct </span>MoveRef&lt;<span class="lifetime">'frame</span>, T: <span class="question-mark">?</span>Sized&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) ptr: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span><span class="kw-2">mut </span>T,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) status: SlotStorageStatus&lt;<span class="lifetime">'frame</span>&gt;,
+<span class="doccomment">/// A "reference" type which *uniquely* owns its referent type `T` with respect to external storage
+/// with lifetime `'frame`.
+///
+/// Conceptually, it has these characteristics:
+///
+/// - similar to `&amp;'frame mut` because it *uniquely* references other data with lifetime `'frame`
+/// - similar to `Box` because it is *owning*
+///
+/// The distinguishing characteristic of [`MoveRef`] from `&amp;mut` and [`Box`](crate::Box) is how it
+/// is created with a backing storage [`Slot`](crate::Slot) and how that defines its ownership of
+/// the referent data, and ultimately how the backing storage is responsible for running the
+/// destructor for its referent when it finally goes out of scope.
+///
+/// A motivating example for [`MoveRef`] is the concept of placement-initialization in C++:
+///
+/// Imagine we define FFI bindings for a C++ class we intend to use in Rust.
+///
+/// Creating instances for this class on the heap is straightforward and well understood: we can use
+/// raw pointers and eventually either convert to a reference or [`Box`](crate::Box).
+///
+/// Creating instances for this class on the stack is more difficult. We can use
+/// [`MaybeUninit`](core::mem::MaybeUninit) to create a chunk of data and initialize into that.
+///
+/// But we have to be particularly careful when using the result because in Rust, data moves by
+/// default, rather than copies by default as in C++. So any access of the data in Rust could
+/// potentially move the data out from under some expected location in C++ and cause a crash when
+/// execution proceeds again in C++.
+///
+/// So we need a type which acts like a (mutable) reference but does not let us move simply by
+/// accessing it. This would be similar to a [`Pin&lt;&amp;mut T&gt;`], where the [`Pin`] prevents movement,
+/// but the inner `&amp;mut` still allows mutation.
+///
+/// But we also want the possibility to *actually* move the data in some cases, like we would
+/// explicitly do in C++ with a move constructor or move assignment operation.
+///
+/// This interface is exactly what [`MoveRef`] provides, along with [`DerefMove`](crate::DerefMove).
+</span><span class="kw">pub struct </span>MoveRef&lt;<span class="lifetime">'frame</span>, T: <span class="question-mark">?</span>Sized&gt; {
+    <span class="doccomment">/// The underlying mutable reference with referent stored in some external [`Slot`](crate::Slot).
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) ptr: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span><span class="kw-2">mut </span>T,
+    <span class="doccomment">/// Status flags for the storage which track initialization, dropping state, and reference count.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) status: SlotStorageStatus&lt;<span class="lifetime">'frame</span>&gt;,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'frame</span>, T: <span class="question-mark">?</span>Sized&gt; core::fmt::Debug <span class="kw">for </span>MoveRef&lt;<span class="lifetime">'frame</span>, T&gt;
@@ -388,7 +471,8 @@
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'frame</span>, T: <span class="question-mark">?</span>Sized&gt; MoveRef&lt;<span class="lifetime">'frame</span>, T&gt; {
-    <span class="attr">#[inline]
+    <span class="doccomment">/// Create a new unchecked [`MoveRef`] from a mutable ref and [`SlotStorageStatus`].
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>new_unchecked(
         ptr: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span><span class="kw-2">mut </span>T,
         status: SlotStorageStatus&lt;<span class="lifetime">'frame</span>&gt;,
@@ -396,13 +480,19 @@
         <span class="kw">return </span><span class="self">Self </span>{ ptr, status };
     }
 
-    <span class="attr">#[must_use]
+    <span class="doccomment">/// Transform a [`MoveRef&lt;T&gt;`] into a [`Pin&lt;MoveRef&lt;T&gt;&gt;`]. This is safe because the interface
+    /// for [`MoveRef`] enforces that its referent will not be implicitly moved or have its storage
+    /// invalidated until the [`MoveRef&lt;T&gt;`] (and its backing [`Slot`](crate::Slot)) is dropped.
+    </span><span class="attr">#[must_use]
     #[inline]
     </span><span class="kw">pub fn </span>into_pin(<span class="self">self</span>) -&gt; Pin&lt;<span class="self">Self</span>&gt; {
         <span class="kw">return unsafe </span>{ Pin::new_unchecked(<span class="self">self</span>) }; <span class="comment">// tarpaulin
     </span>}
 
-    <span class="attr">#[inline]
+    <span class="doccomment">/// Consume a [`Pin&lt;Self&gt;`] and return a raw `*mut T`. This operation inhibits destruction of
+    /// `T` by implicit [`Drop`] and the caller becomes responsible for eventual explicit
+    /// destruction and cleanup, otherwise the memory will leak.
+    </span><span class="attr">#[inline]
     #[must_use]
     </span><span class="kw">pub fn </span>release(pin: Pin&lt;<span class="self">Self</span>&gt;) -&gt; <span class="kw-2">*mut </span>T {
         <span class="kw">let </span>mov = <span class="kw">unsafe </span>{ Pin::into_inner_unchecked(pin) }; <span class="comment">// tarpaulin

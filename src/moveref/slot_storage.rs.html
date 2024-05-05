@@ -205,18 +205,50 @@
 <a href="#205" id="205">205</a>
 <a href="#206" id="206">206</a>
 <a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{cell::Cell, mem::MaybeUninit};
 
 <span class="kw">use </span><span class="kw">crate</span>::slot::Slot;
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>SlotStorageTracker {
-    initialized: Cell&lt;bool&gt;,
-    released: Cell&lt;bool&gt;,
-    references: Cell&lt;usize&gt;,
+<span class="doccomment">/// State for tracking the status of a storage [`Slot`].
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>SlotStorageTracker {
+    <span class="doccomment">/// Whether the [`Slot`] is initialized.
+    </span>initialized: Cell&lt;bool&gt;,
+    <span class="doccomment">/// Whether the [`Slot`] is released. If released, [`Drop`] will be skipped.
+    </span>released: Cell&lt;bool&gt;,
+    <span class="doccomment">/// Number of references to the [`Slot`]. Used for checking various conditions.
+    </span>references: Cell&lt;usize&gt;,
 }
 
 <span class="kw">impl </span>SlotStorageTracker {
-    <span class="attr">#[inline]
+    <span class="doccomment">/// Construct a new [`SlotStorageTracker`].
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="kw">return </span><span class="self">Self </span>{
             initialized: Cell::new(<span class="bool-val">false</span>),
@@ -225,7 +257,8 @@
         };
     }
 
-    <span class="attr">#[inline]
+    <span class="doccomment">/// Project the the status by borrowing the internal state.
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub const fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SlotStorageStatus&lt;<span class="lifetime">'_</span>&gt; {
         <span class="kw">return </span>SlotStorageStatus {
             initialized: <span class="kw-2">&amp;</span><span class="self">self</span>.initialized,
@@ -235,103 +268,110 @@
     }
 }
 
-<span class="attr">#[derive(Clone, Copy)]
+<span class="doccomment">/// The borrowed form of [`SlotStorageTracker`].
+</span><span class="attr">#[derive(Clone, Copy)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>SlotStorageStatus&lt;<span class="lifetime">'frame</span>&gt; {
-    initialized: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span>Cell&lt;bool&gt;,
-    released: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span>Cell&lt;bool&gt;,
-    references: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span>Cell&lt;usize&gt;,
+    <span class="doccomment">/// Whether the [`Slot`] is initialized.
+    </span>initialized: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span>Cell&lt;bool&gt;,
+    <span class="doccomment">/// Whether the [`Slot`] is released. If released, [`Drop`] will be skipped.
+    </span>released: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span>Cell&lt;bool&gt;,
+    <span class="doccomment">/// Number of references to the [`Slot`]. Used for checking various conditions.
+    </span>references: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span>Cell&lt;usize&gt;,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'frame</span>&gt; SlotStorageStatus&lt;<span class="lifetime">'frame</span>&gt; {
-    <span class="attr">#[allow(unused)] </span><span class="comment">// NOTE: used (indirectly) in macros
+    <span class="doccomment">/// Set the status to initialized.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const fn </span>new(
-        initialized: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span>Cell&lt;bool&gt;,
-        released: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span>Cell&lt;bool&gt;,
-        references: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span>Cell&lt;usize&gt;,
-    ) -&gt; <span class="self">Self </span>{
-        <span class="attr">#[rustfmt::skip]
-        </span><span class="kw">return </span><span class="self">Self </span>{
-            initialized, <span class="comment">// tarpaulin
-            </span>released,    <span class="comment">// tarpaulin
-            </span>references,  <span class="comment">// tarpaulin
-        </span>};
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>increment(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">debug_assert!</span>(<span class="self">self</span>.references_are_zeroed());
-        <span class="self">self</span>.references.set(<span class="self">self</span>.references.get() + <span class="number">1</span>);
-    }
-
-    <span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>initialize(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">debug_assert!</span>(!<span class="self">self</span>.is_initialized());
         <span class="self">self</span>.initialized.set(<span class="bool-val">true</span>);
         <span class="self">self</span>.increment();
     }
 
-    <span class="attr">#[inline]
+    <span class="doccomment">/// Increment the reference count.
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>increment(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="macro">debug_assert!</span>(<span class="self">self</span>.is_reference_zeroed());
+        <span class="self">self</span>.references.set(<span class="self">self</span>.references.get() + <span class="number">1</span>);
+    }
+
+    <span class="doccomment">/// Decrement the reference count.
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>decrement(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">debug_assert!</span>(!<span class="self">self</span>.references_are_zeroed());
+        <span class="macro">debug_assert!</span>(!<span class="self">self</span>.is_reference_zeroed());
         <span class="self">self</span>.references.set(<span class="self">self</span>.references.get() - <span class="number">1</span>);
     }
 
-    <span class="attr">#[inline]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_leaking(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="kw">return </span>!<span class="self">self</span>.is_released() &amp;&amp; <span class="self">self</span>.is_initialized() &amp;&amp; !<span class="self">self</span>.references_are_zeroed();
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_initialized(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="kw">return </span><span class="self">self</span>.initialized.get();
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_uninitialized(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="kw">return </span><span class="self">self</span>.references_are_zeroed() &amp;&amp; !<span class="self">self</span>.is_initialized();
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_released(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="kw">return </span><span class="self">self</span>.released.get();
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>references_are_zeroed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="kw">return </span><span class="self">self</span>.references.get() == <span class="number">0</span>;
-    }
-
-    <span class="attr">#[inline]
+    <span class="doccomment">/// Mark the storage as released. Once marked as released, [`Drop`] will be skipped.
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>release(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="self">self</span>.released.set(<span class="bool-val">true</span>);
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>terminate(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+    <span class="doccomment">/// Mark the storage as terminated. This is just a decrement followed by an assertion that
+    /// references are finally zeroed. It is intended to be called only when the storage is dropped.
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>terminate(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="self">self</span>.decrement();
-        <span class="macro">debug_assert!</span>(<span class="self">self</span>.references_are_zeroed());
+        <span class="macro">debug_assert!</span>(<span class="self">self</span>.is_reference_zeroed());
+    }
+
+    <span class="doccomment">/// Check if the storage is initialized.
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_initialized(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">return </span><span class="self">self</span>.initialized.get();
+    }
+
+    <span class="doccomment">/// Check if the storage is uninitialized.
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_uninitialized(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">return </span><span class="self">self</span>.is_reference_zeroed() &amp;&amp; !<span class="self">self</span>.is_initialized();
+    }
+
+    <span class="doccomment">/// Check if the storage is released.
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_released(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">return </span><span class="self">self</span>.released.get();
+    }
+
+    <span class="doccomment">/// Check if the storage is leaking.
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_leaking(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">return </span>!<span class="self">self</span>.is_released() &amp;&amp; <span class="self">self</span>.is_initialized() &amp;&amp; !<span class="self">self</span>.is_reference_zeroed();
+    }
+
+    <span class="doccomment">/// Check if the references are zeroed.
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_reference_zeroed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">return </span><span class="self">self</span>.references.get() == <span class="number">0</span>;
     }
 }
 
-<span class="attr">#[allow(clippy::module_name_repetitions)]
-#[allow(unused)] </span><span class="comment">// NOTE: used in macros
-</span><span class="attr">#[derive(Copy, Clone, Debug)]
+<span class="doccomment">/// Kind dictacting whether the storage should drop its referent when leaving scope.
+</span><span class="attr">#[allow(clippy::module_name_repetitions)]
+#[derive(Copy, Clone, Debug)]
 </span><span class="kw">pub enum </span>SlotStorageKind {
-    Drop,
-    Keep,
+    <span class="doccomment">/// The storage should drop its referent.
+    </span>Drop,
+    <span class="doccomment">/// The storage should not drop its referent.
+    </span>Keep,
 }
 
-<span class="kw">pub struct </span>SlotStorage&lt;T&gt; {
-    kind: SlotStorageKind,
-    memory: MaybeUninit&lt;T&gt;,
-    tracker: SlotStorageTracker,
-    <span class="attr">#[cfg(debug_assertions)]
+<span class="doccomment">/// Type used for constructing the storage for a [`Slot`] backing a [`MoveRef`](crate::MoveRef).
+</span><span class="kw">pub struct </span>SlotStorage&lt;T&gt; {
+    <span class="doccomment">/// The kind dictating the storage drop behavior.
+    </span>kind: SlotStorageKind,
+    <span class="doccomment">/// The raw underlying (possibily uninitialized) storage memory.
+    </span>memory: MaybeUninit&lt;T&gt;,
+    <span class="doccomment">/// Status flags for the storage which track initialization, dropping state, and reference count.
+    </span>tracker: SlotStorageTracker,
+    <span class="doccomment">/// Location for reporting panic data.
+    </span><span class="attr">#[cfg(debug_assertions)]
     </span>location: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>core::panic::Location&lt;<span class="lifetime">'static</span>&gt;,
 }
 
 <span class="kw">impl</span>&lt;T&gt; Drop <span class="kw">for </span>SlotStorage&lt;T&gt; {
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="kw">let </span>status = <span class="self">self</span>.tracker.status();
         <span class="kw">if </span>status.is_uninitialized() {
             <span class="comment">// NOTE: the only time this should happen is when the `SlotStorage` is created manually,
@@ -340,7 +380,7 @@
             </span><span class="kw">return</span>; <span class="comment">// tarpaulin
         </span>}
         <span class="kw">if </span>status.is_leaking() {
-            <span class="self">self</span>.double_panic();
+            <span class="self">self</span>.non_unwinding_panic_abort();
         }
         <span class="kw">if </span><span class="macro">matches!</span>(<span class="self">self</span>.kind, SlotStorageKind::Drop) {
             <span class="kw">unsafe </span>{ <span class="self">self</span>.memory.assume_init_drop() }
@@ -349,35 +389,9 @@
 }
 
 <span class="kw">impl</span>&lt;T&gt; SlotStorage&lt;T&gt; {
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>double_panic(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">struct </span>DoublePanic;
-
-        <span class="attr">#[rustfmt::skip]
-        </span><span class="kw">impl </span>Drop <span class="kw">for </span>DoublePanic { <span class="comment">// tarpaulin
-            </span><span class="attr">#[inline]
-            </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-                <span class="macro">assert!</span>(!<span class="macro">cfg!</span>(not(test))); <span class="comment">// tarpaulin
-            </span>}
-        }
-
-        <span class="kw">let </span>_double_panic = DoublePanic;
-
-        <span class="attr">#[cfg(debug_assertions)] </span><span class="comment">// tarpaulin
-        </span><span class="macro">panic!</span>(
-            <span class="string">"a critical reference counter at {} was not zeroed!"</span>,
-            <span class="self">self</span>.location <span class="comment">// tarpaulin
-        </span>);
-
-        <span class="attr">#[cfg(not(debug_assertions))] </span><span class="comment">// tarpaulin
-        </span><span class="macro">panic!</span>(<span class="string">"a critical reference counter was not zeroed!"</span>); <span class="comment">// tarpaulin
-    </span>}
-}
-
-<span class="kw">impl</span>&lt;T&gt; SlotStorage&lt;T&gt; {
-    <span class="attr">#[must_use]
-    #[allow(unused)] </span><span class="comment">// NOTE: used in macros
-    </span><span class="attr">#[inline]
+    <span class="doccomment">/// Construct a new [`SlotStorage&lt;T&gt;`] given a `kind`.
+    </span><span class="attr">#[must_use]
+    #[inline]
     </span><span class="kw">pub const fn </span>new(kind: SlotStorageKind) -&gt; <span class="self">Self </span>{
         <span class="kw">return </span><span class="self">Self </span>{
             kind,                          <span class="comment">// tarpaulin
@@ -388,12 +402,52 @@
         };
     }
 
-    <span class="attr">#[allow(unused)] </span><span class="comment">// NOTE: used in macros
+    <span class="doccomment">/// Project the [`Slot`] for the storage.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>slot(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Slot&lt;<span class="lifetime">'_</span>, T&gt; {
         <span class="kw">let </span>memory = <span class="kw-2">&amp;mut </span><span class="self">self</span>.memory;
         <span class="kw">let </span>status = <span class="self">self</span>.tracker.status();
         <span class="kw">return </span>Slot { memory, status };
+    }
+
+    <span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>display_location(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>core::fmt::Display {
+        <span class="doccomment">/// Placeholder location display.
+        </span><span class="kw">const </span>UNKNOWN: <span class="kw-2">&amp;</span>str = <span class="string">"&lt;unknown&gt;"</span>;
+
+        <span class="kw">if </span><span class="macro">cfg!</span>(debug_assertions) {
+            <span class="kw">return </span><span class="self">self</span>.location;
+        }
+        <span class="kw">return </span><span class="kw-2">&amp;</span>UNKNOWN; <span class="comment">// tarpaulin
+    </span>}
+
+    <span class="doccomment">/// Force an abort by triggering a panic mid-unwind.
+    ///
+    /// This is one way to force an LLVM abort from inside of `core` without using
+    /// [`core::intrinsics::abort`] which requires `nightly`.
+    </span><span class="kw">fn </span>non_unwinding_panic_abort(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="doccomment">/// Helper type for triggering the double-panic by panicking on drop.
+        </span><span class="kw">struct </span>DropAndPanic;
+
+        <span class="attr">#[rustfmt::skip]
+        </span><span class="kw">impl </span>Drop <span class="kw">for </span>DropAndPanic { <span class="comment">// tarpaulin
+            </span><span class="attr">#[inline]
+            </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+                <span class="attr">#[allow(clippy::manual_assert)] </span><span class="comment">// tarpaulin
+                </span><span class="kw">if </span><span class="macro">cfg!</span>(not(test)) {
+                    <span class="macro">panic!</span>(<span class="string">"initiating double-panic to trigger an LLVM abort"</span>) <span class="comment">// tarpaulin
+                </span>}
+            }
+        }
+
+        <span class="comment">// Trigger the first panic.
+        </span><span class="kw">let </span>_first_panic_trigger = DropAndPanic;
+
+        <span class="comment">// Trigger the second panic mid-unwind.
+        </span><span class="macro">panic!</span>(
+            <span class="string">"a critical reference counter at {} was not zeroed!"</span>,
+            <span class="self">self</span>.display_location() <span class="comment">// tarpaulin
+        </span>);
     }
 }
 

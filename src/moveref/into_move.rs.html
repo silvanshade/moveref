@@ -104,14 +104,20 @@
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{mem::MaybeUninit, ops::Deref, pin::Pin};
 
 <span class="kw">use crate</span>::{deref_move::DerefMove, move_ref::MoveRef, slot::Slot};
 
-<span class="kw">pub trait </span>IntoMove: Deref + Sized {
+<span class="doccomment">/// A trait for transforming a [`Deref`] type into a pinned [`MoveRef`] with respect to a specified
+/// backing storage type [`IntoMove::Storage`].
+</span><span class="kw">pub trait </span>IntoMove: Deref + Sized {
     <span class="kw">type </span>Storage: Sized;
 
-    <span class="kw">fn </span>into_move&lt;<span class="lifetime">'frame</span>&gt;(
+    <span class="doccomment">/// Consume `self` and create a pinned [`MoveRef`] with `self`'s contents placed into `storage`.
+    </span><span class="kw">fn </span>into_move&lt;<span class="lifetime">'frame</span>&gt;(
         <span class="self">self</span>,
         storage: Slot&lt;<span class="lifetime">'frame</span>, <span class="self">Self</span>::Storage&gt;,
     ) -&gt; Pin&lt;MoveRef&lt;<span class="lifetime">'frame</span>, <span class="self">Self</span>::Target&gt;&gt;

@@ -167,32 +167,54 @@
 <a href="#167" id="167">167</a>
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
 </pre></div><pre class="rust"><code><span class="attr">#![deny(clippy::all)]
 #![deny(clippy::cargo)]
 #![deny(clippy::implicit_return)]
 #![deny(clippy::nursery)]
 #![deny(clippy::pedantic)]
+#![deny(clippy::missing_docs_in_private_items)]
 #![allow(clippy::needless_return)]
 #![allow(clippy::redundant_pub_crate)]
 #![allow(clippy::type_repetition_in_bounds)]
 #![no_std]
 
-#[cfg(feature = <span class="string">"alloc"</span>)]
+</span><span class="doccomment">//! Types and traits for C++ style placement initialization and move semantics.
+
+</span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">extern crate </span>alloc;
 
 <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>alloc::{boxed::Box, rc::Rc, sync::Arc};
 
-<span class="attr">#[macro_use]
+<span class="doccomment">/// Macros for creating [`crate::MoveRef`] values.
+</span><span class="attr">#[macro_use]
 </span><span class="kw">mod </span>macros;
 
-<span class="kw">mod </span>deref_move;
-<span class="kw">mod </span>emplace;
-<span class="kw">mod </span>into_move;
-<span class="kw">mod </span>move_ref;
-<span class="kw">pub mod </span>new;
-<span class="kw">mod </span>slot;
-<span class="kw">mod </span>slot_storage;
+<span class="doccomment">/// Dereferencing move operations.
+</span><span class="kw">mod </span>deref_move;
+<span class="doccomment">/// Emplacement operations for constructing values.
+</span><span class="kw">mod </span>emplace;
+<span class="doccomment">/// Movement operations.
+</span><span class="kw">mod </span>into_move;
+<span class="doccomment">/// Move-dereferencing uniquely-owning references.
+</span><span class="kw">mod </span>move_ref;
+<span class="doccomment">/// Construction operations.
+</span><span class="kw">pub mod </span>new;
+<span class="doccomment">/// Storage slots for move-references.
+</span><span class="kw">mod </span>slot;
+<span class="doccomment">/// Storage slot implementation details.
+</span><span class="kw">mod </span>slot_storage;
 
 <span class="kw">pub use </span>deref_move::DerefMove;
 <span class="kw">pub use </span>emplace::Emplace;

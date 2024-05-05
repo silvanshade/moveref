@@ -54,6 +54,15 @@
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
 <a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{mem::MaybeUninit, pin::Pin};
 
 <span class="kw">use crate</span>::{
@@ -62,13 +71,17 @@
     slot_storage::SlotStorageStatus,
 };
 
-<span class="kw">pub struct </span>Slot&lt;<span class="lifetime">'frame</span>, T&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) memory: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span><span class="kw-2">mut </span>MaybeUninit&lt;T&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) status: SlotStorageStatus&lt;<span class="lifetime">'frame</span>&gt;,
+<span class="doccomment">/// Backing storage for a [`MoveRef`].
+</span><span class="kw">pub struct </span>Slot&lt;<span class="lifetime">'frame</span>, T&gt; {
+    <span class="doccomment">/// The raw underlying (possibily uninitialized) storage memory.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) memory: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span><span class="kw-2">mut </span>MaybeUninit&lt;T&gt;,
+    <span class="doccomment">/// Status flags for the storage which track initialization, dropping state, and reference count.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) status: SlotStorageStatus&lt;<span class="lifetime">'frame</span>&gt;,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'frame</span>, T&gt; Slot&lt;<span class="lifetime">'frame</span>, T&gt; {
-    <span class="attr">#[inline]
+    <span class="doccomment">/// Construct and pin `new` into the slot and return the associated owning [`MoveRef`].
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>emplace&lt;N: New&lt;Output = T&gt;&gt;(<span class="self">self</span>, new: N) -&gt; Pin&lt;MoveRef&lt;<span class="lifetime">'frame</span>, T&gt;&gt; {
         <span class="kw">match </span><span class="self">self</span>.try_emplace(new) {
             | <span class="prelude-val">Ok</span>(pin) =&gt; <span class="kw">return </span>pin,
@@ -76,7 +89,9 @@
         }
     }
 
-    <span class="doccomment">/// # Errors
+    <span class="doccomment">/// Try to construct and pin `new` into the slot and return the associated owning [`MoveRef`].
+    ///
+    /// # Errors
     ///
     /// Should return `Err` if the `new` initializer fails with an error.
     </span><span class="attr">#[inline]
@@ -92,18 +107,21 @@
         <span class="kw">return </span><span class="prelude-val">Ok</span>(pin);
     }
 
-    <span class="attr">#[inline]
+    <span class="doccomment">/// Move and pin `val` into the slot and return the associated owning [`MoveRef`].
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>pin(<span class="self">self</span>, val: T) -&gt; Pin&lt;MoveRef&lt;<span class="lifetime">'frame</span>, T&gt;&gt; {
         <span class="kw">return </span><span class="self">self</span>.emplace(<span class="kw">crate</span>::new::of(val));
     }
 
-    <span class="attr">#[inline]
+    <span class="doccomment">/// Move `val` into the slot and return the associated owning [`MoveRef`].
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>put(<span class="self">self</span>, val: T) -&gt; MoveRef&lt;<span class="lifetime">'frame</span>, T&gt; {
         <span class="kw">let </span>pin = <span class="self">self</span>.pin(val);
         <span class="kw">return unsafe </span>{ Pin::into_inner_unchecked(pin) }; <span class="comment">// tarpaulin
     </span>}
 
-    <span class="attr">#[inline]
+    <span class="doccomment">/// Write `val` into the slot and returns a `&amp;mut ref` to its location and its storage status.
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write(<span class="self">self</span>, val: T) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">'frame </span><span class="kw-2">mut </span>T, SlotStorageStatus&lt;<span class="lifetime">'frame</span>&gt;) {
         <span class="self">self</span>.status.initialize();
         <span class="kw">let </span>ptr = <span class="self">self</span>.memory.write(val);

@@ -99,14 +99,20 @@
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
 <a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{mem::MaybeUninit, ops::Deref, pin::Pin};
 
 <span class="kw">use </span><span class="kw">crate</span>::new::{New, TryNew};
 
-<span class="kw">pub trait </span>Emplace&lt;T&gt;: Sized + Deref {
+<span class="doccomment">/// Operations for constructing [`New`] values into a `Self::Output` instance.
+</span><span class="kw">pub trait </span>Emplace&lt;T&gt;: Sized + Deref {
     <span class="kw">type </span>Output: Deref&lt;Target = <span class="self">Self</span>::Target&gt;;
 
-    <span class="attr">#[inline]
+    <span class="doccomment">/// Construct a [`New`] value into a fresh `Self::Output` instance.
+    </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>emplace&lt;N: New&lt;Output = T&gt;&gt;(new: N) -&gt; <span class="self">Self</span>::Output {
         <span class="kw">match </span><span class="self">Self</span>::try_emplace(new) {
             | <span class="prelude-val">Ok</span>(val) =&gt; <span class="kw">return </span>val,
@@ -114,7 +120,9 @@
         }
     }
 
-    <span class="doccomment">/// # Errors
+    <span class="doccomment">/// Try to construct a [`New`] value into a fresh `Self::Output` instance.
+    ///
+    /// # Errors
     ///
     /// Should return `Err` if the `new` initializer fails with an error.
     </span><span class="kw">fn </span>try_emplace&lt;N: TryNew&lt;Output = T&gt;&gt;(new: N) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Output, N::Error&gt;;

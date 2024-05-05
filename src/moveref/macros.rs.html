@@ -160,7 +160,97 @@
 <a href="#160" id="160">160</a>
 <a href="#161" id="161">161</a>
 <a href="#162" id="162">162</a>
-</pre></div><pre class="rust"><code><span class="attr">#[macro_export]
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+</pre></div><pre class="rust"><code><span class="doccomment">/// Macro for binding a variable to a fresh [`MoveRef`](crate::MoveRef).
+///
+/// - `bind!(x = &amp;move *ptr)` creates an `x: MoveRef&lt;T&gt;` given `ptr: impl (DerefMove +
+///   DerefMut&lt;Target = T&gt;)`
+///
+/// The above invocation moves the referent of a *uniquely* owning poiner into a fresh
+/// [`MoveRef`](crate::MoveRef) bound to `x`.
+///
+/// - `bind!(x = &amp;move val)` creates an `x: MoveRef&lt;T&gt;` given `val: T`
+///
+/// The above invocation moves any value into a fresh [`MoveRef`](crate::MoveRef) bound to `x`.
+///
+/// - `bind!(x = con)` creates an `x: Pin&lt;MoveRef&lt;T&gt;&gt;` given `con: impl New&lt;Output = T&gt;`
+///
+/// The above invocaton constructs a [`New`](crate::New) value into a fresh
+/// [`MoveRef`](crate::MoveRef) bound to `x`.
+///
+/// - `bind!(mut x: T = ...)` (with right-hand side of `&amp;move *ptr` or `&amp;move val` or `con`)
+///
+/// The above generalization can be used with any earlier invocation form to add mutability and
+/// typing annotations.
+</span><span class="attr">#[macro_export]
 </span><span class="macro">macro_rules!</span> bind {
     (<span class="kw-2">mut </span><span class="macro-nonterminal">$name</span>:ident $(: <span class="macro-nonterminal">$ty</span>:ty)<span class="question-mark">? </span>= <span class="kw-2">&amp;</span><span class="kw">move </span><span class="kw-2">*</span><span class="macro-nonterminal">$expr</span>:expr) =&gt; {
         <span class="macro-nonterminal">$</span><span class="macro">crate::bind!</span>(@<span class="kw">move</span>(<span class="kw-2">mut</span>) <span class="macro-nonterminal">$name</span>, $(<span class="macro-nonterminal">$ty</span>)<span class="question-mark">?</span>, <span class="macro-nonterminal">$expr</span>)
@@ -195,10 +285,40 @@
     };
 }
 
-<span class="attr">#[macro_export]
+<span class="doccomment">/// Macro for creating a fresh [`MoveRef`](crate::MoveRef) expression.
+///
+/// Because a `v: MoveRef&lt;'frame, T&gt;` always has an associated lifetime `'frame`, this macro can
+/// generally only be used where it would be immediately consumed by some enclosing expression, such
+/// as in the position of a function argument.
+///
+/// Trying to use this as `let v = expr!(...)` will not work because the lifetime `'frame` will not
+/// expand to the enclosing let binding. Hence the need for the separate `bind!(v = ...)` macro.
+///
+/// Otherwise, the usage is generally the same as `bind!(...)`:
+///
+/// - `expr!(&amp;move *ptr)` creates a `MoveRef&lt;T&gt;` given `ptr: impl (DerefMove +
+///   DerefMut&lt;Target = T&gt;)`
+///
+/// The above invocation moves the referent of a *uniquely* owning poiner into a fresh
+/// [`MoveRef`](crate::MoveRef).
+///
+/// - `expr!(&amp;move val)` creates an `MoveRef&lt;T&gt;` given `val: T`
+///
+/// The above invocation moves any value into a fresh [`MoveRef`](crate::MoveRef).
+///
+/// - `expr!(con)` creates an `x: Pin&lt;MoveRef&lt;T&gt;&gt;` given `con: impl New&lt;Output = T&gt;`
+///
+/// The above invocaton constructs a [`New`](crate::New) value into a fresh
+/// [`MoveRef`](crate::MoveRef).
+</span><span class="attr">#[macro_export]
 </span><span class="macro">macro_rules!</span> expr {
     (<span class="kw-2">&amp;</span><span class="kw">move </span><span class="kw-2">*</span><span class="macro-nonterminal">$expr</span>:expr) =&gt; {
-        <span class="macro-nonterminal">$crate::DerefMove::deref_move</span>(<span class="macro-nonterminal">$expr</span>, <span class="macro-nonterminal">$</span><span class="macro">crate::expr_slot!</span>(<span class="attr">#[<span class="macro-nonterminal">dropping</span>]</span>))
+        <span class="macro-nonterminal">$crate::DerefMove::deref_move</span>(
+            <span class="macro-nonterminal">$expr</span>,
+            <span class="macro-nonterminal">$</span><span class="macro">crate::expr_slot!</span>(
+                <span class="attr">#[<span class="macro-nonterminal">dropping</span>]
+            </span>)
+        )
     };
     (<span class="kw-2">&amp;</span><span class="kw">move </span><span class="macro-nonterminal">$expr</span>:expr) =&gt; {
         <span class="macro-nonterminal">$</span><span class="macro">crate::expr_slot!</span>().<span class="macro-nonterminal">put</span>(<span class="macro-nonterminal">$expr</span>)
@@ -208,19 +328,20 @@
     };
 }
 
-<span class="attr">#[macro_export]
-</span><span class="macro">macro_rules!</span> expr_slot {
-    (<span class="attr">#[dropping]</span>) =&gt; {{
-        <span class="kw">let </span>kind = <span class="macro-nonterminal">$crate::SlotStorageKind::Drop</span>;
-        <span class="macro-nonterminal">$crate::SlotStorage::new</span>(kind).slot()
-    }};
-    () =&gt; {{
-        <span class="kw">let </span>kind = <span class="macro-nonterminal">$crate::SlotStorageKind::Keep</span>;
-        <span class="macro-nonterminal">$crate::SlotStorage::new</span>(kind).slot()
-    }};
-}
-
-<span class="attr">#[macro_export]
+<span class="doccomment">/// Macro for binding a variable to a fresh [`Slot`](crate::Slot) for storage of a
+/// [`MoveRef`](crate::MoveRef).
+///
+/// - `bind_slot!(x)`
+///
+/// The above invocation binds a slot to the variable `x`.
+///
+/// - `bind_slot!(#[dropping] x)`
+///
+/// The above invocation binds a (dropping) slot to the variable `x`. A [`MoveRef`](crate::MoveRef)
+/// using `x` as backing storage will drop its referent when `x` goes out of scope.
+///
+/// Both of the above invocation forms also allow typing annotations on `x` as with [`bind!`].
+</span><span class="attr">#[macro_export]
 </span><span class="macro">macro_rules!</span> bind_slot {
     (<span class="attr">#[dropping] </span>$(<span class="macro-nonterminal">$name</span>:ident : <span class="macro-nonterminal">$ty</span>:ty),* $(,)<span class="question-mark">?</span>) =&gt; {
         $(
@@ -252,7 +373,23 @@
     };
 }
 
-<span class="macro">macro_rules!</span> trivial_copy {
+<span class="doccomment">/// Macro for creating a fresh [`Slot`](crate::Slot) expression.
+///
+/// This macro has the same relationship to [`bind_slot!`] as [`expr!`] does to [`bind!`].
+</span><span class="attr">#[macro_export]
+</span><span class="macro">macro_rules!</span> expr_slot {
+    (<span class="attr">#[dropping]</span>) =&gt; {{
+        <span class="kw">let </span>kind = <span class="macro-nonterminal">$crate::SlotStorageKind::Drop</span>;
+        <span class="macro-nonterminal">$crate::SlotStorage::new</span>(kind).slot()
+    }};
+    () =&gt; {{
+        <span class="kw">let </span>kind = <span class="macro-nonterminal">$crate::SlotStorageKind::Keep</span>;
+        <span class="macro-nonterminal">$crate::SlotStorage::new</span>(kind).slot()
+    }};
+}
+
+<span class="doccomment">/// Boilerplate macro for defining trivial [`CopyNew`](crate::CopyNew) instances.
+</span><span class="macro">macro_rules!</span> trivial_copy {
     ($(<span class="macro-nonterminal">$ty</span>:ty $(<span class="kw">where </span>[$(<span class="macro-nonterminal">$targs</span>:tt)<span class="kw-2">*</span>])<span class="question-mark">?</span>),* $(,)<span class="question-mark">?</span>) =&gt; {
         $(
             <span class="kw">impl</span>&lt;$($(<span class="macro-nonterminal">$targs</span>)<span class="kw-2">*</span>)<span class="question-mark">?</span>&gt; <span class="macro-nonterminal">$crate::new::CopyNew </span><span class="kw">for </span><span class="macro-nonterminal">$ty </span><span class="kw">where </span><span class="self">Self</span>: ::core::clone::Clone {
@@ -269,7 +406,8 @@
     }
 }
 
-<span class="macro">macro_rules!</span> trivial_move {
+<span class="doccomment">/// Boilerplate macro for defining trivial [`MoveNew`](crate::CopyNew) instances.
+</span><span class="macro">macro_rules!</span> trivial_move {
     ($(<span class="macro-nonterminal">$ty</span>:ty $(<span class="kw">where </span>[$(<span class="macro-nonterminal">$targs</span>:tt)<span class="kw-2">*</span>])<span class="question-mark">?</span>),* $(,)<span class="question-mark">?</span>) =&gt; {
         $(
             <span class="kw">impl</span>&lt;$($(<span class="macro-nonterminal">$targs</span>)<span class="kw-2">*</span>)<span class="question-mark">?</span>&gt; <span class="macro-nonterminal">$crate::new::MoveNew </span><span class="kw">for </span><span class="macro-nonterminal">$ty </span>{

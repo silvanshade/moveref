@@ -1,4 +1,4 @@
-use core::{mem::MaybeUninit, ops::DerefMut, pin::Pin};
+use core::{mem::MaybeUninit, ops::DerefMut};
 
 use crate::{into_move::IntoMove, move_ref::MoveRef, slot::Slot};
 
@@ -65,23 +65,5 @@ unsafe impl<'f, T: ?Sized> DerefMove for MoveRef<'f, T> {
         Self: 'frame,
     {
         return self;
-    }
-}
-
-#[cfg(feature = "cxx")]
-unsafe impl<T> DerefMove for cxx::UniquePtr<T>
-where
-    T: crate::into_move::CxxUniquePtrAllocate,
-    T: cxx::memory::UniquePtrTarget,
-    T: Unpin,
-{
-    fn deref_move<'frame>(
-        self,
-        storage: Slot<'frame, Self::Storage>,
-    ) -> MoveRef<'frame, Self::Target>
-    where
-        Self: 'frame,
-    {
-        return Pin::into_inner(self.into_move(storage));
     }
 }

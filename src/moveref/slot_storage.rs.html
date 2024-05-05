@@ -187,6 +187,24 @@
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{cell::Cell, mem::MaybeUninit};
 
 <span class="kw">use </span><span class="kw">crate</span>::slot::Slot;
@@ -212,8 +230,8 @@
         <span class="kw">return </span>SlotStorageStatus {
             initialized: <span class="kw-2">&amp;</span><span class="self">self</span>.initialized,
             released: <span class="kw-2">&amp;</span><span class="self">self</span>.released,
-            references: <span class="kw-2">&amp;</span><span class="self">self</span>.references,
-        };
+            references: <span class="kw-2">&amp;</span><span class="self">self</span>.references, <span class="comment">// tarpaulin
+        </span>};
     }
 }
 
@@ -232,11 +250,12 @@
         released: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span>Cell&lt;bool&gt;,
         references: <span class="kw-2">&amp;</span><span class="lifetime">'frame </span>Cell&lt;usize&gt;,
     ) -&gt; <span class="self">Self </span>{
-        <span class="kw">return </span><span class="self">Self </span>{
-            initialized,
-            released,
-            references,
-        };
+        <span class="attr">#[rustfmt::skip]
+        </span><span class="kw">return </span><span class="self">Self </span>{
+            initialized, <span class="comment">// tarpaulin
+            </span>released,    <span class="comment">// tarpaulin
+            </span>references,  <span class="comment">// tarpaulin
+        </span>};
     }
 
     <span class="attr">#[inline]
@@ -318,8 +337,8 @@
             <span class="comment">// NOTE: the only time this should happen is when the `SlotStorage` is created manually,
             // outside the use of the macros, since otherwise the storage is initialized immediately
             // after creation.
-            </span><span class="kw">return</span>;
-        }
+            </span><span class="kw">return</span>; <span class="comment">// tarpaulin
+        </span>}
         <span class="kw">if </span>status.is_leaking() {
             <span class="self">self</span>.double_panic();
         }
@@ -334,24 +353,25 @@
     </span><span class="kw">fn </span>double_panic(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="kw">struct </span>DoublePanic;
 
-        <span class="kw">impl </span>Drop <span class="kw">for </span>DoublePanic {
-            <span class="attr">#[inline]
+        <span class="attr">#[rustfmt::skip]
+        </span><span class="kw">impl </span>Drop <span class="kw">for </span>DoublePanic { <span class="comment">// tarpaulin
+            </span><span class="attr">#[inline]
             </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-                <span class="macro">assert!</span>(!<span class="macro">cfg!</span>(not(test)));
-            }
+                <span class="macro">assert!</span>(!<span class="macro">cfg!</span>(not(test))); <span class="comment">// tarpaulin
+            </span>}
         }
 
         <span class="kw">let </span>_double_panic = DoublePanic;
 
-        <span class="attr">#[cfg(debug_assertions)]
+        <span class="attr">#[cfg(debug_assertions)] </span><span class="comment">// tarpaulin
         </span><span class="macro">panic!</span>(
             <span class="string">"a critical reference counter at {} was not zeroed!"</span>,
-            <span class="self">self</span>.location
-        );
+            <span class="self">self</span>.location <span class="comment">// tarpaulin
+        </span>);
 
-        <span class="attr">#[cfg(not(debug_assertions))]
-        </span><span class="macro">panic!</span>(<span class="string">"a critical reference counter was not zeroed!"</span>);
-    }
+        <span class="attr">#[cfg(not(debug_assertions))] </span><span class="comment">// tarpaulin
+        </span><span class="macro">panic!</span>(<span class="string">"a critical reference counter was not zeroed!"</span>); <span class="comment">// tarpaulin
+    </span>}
 }
 
 <span class="kw">impl</span>&lt;T&gt; SlotStorage&lt;T&gt; {
@@ -360,10 +380,10 @@
     </span><span class="attr">#[inline]
     </span><span class="kw">pub const fn </span>new(kind: SlotStorageKind) -&gt; <span class="self">Self </span>{
         <span class="kw">return </span><span class="self">Self </span>{
-            kind,
-            memory: MaybeUninit::uninit(),
-            tracker: SlotStorageTracker::new(),
-            <span class="attr">#[cfg(debug_assertions)]
+            kind,                          <span class="comment">// tarpaulin
+            </span>memory: MaybeUninit::uninit(), <span class="comment">// tarpaulin
+            </span>tracker: SlotStorageTracker::new(),
+            <span class="attr">#[cfg(debug_assertions)]       </span><span class="comment">// tarpaulin
             </span>location: core::panic::Location::caller(),
         };
     }
@@ -374,6 +394,22 @@
         <span class="kw">let </span>memory = <span class="kw-2">&amp;mut </span><span class="self">self</span>.memory;
         <span class="kw">let </span>status = <span class="self">self</span>.tracker.status();
         <span class="kw">return </span>Slot { memory, status };
+    }
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>test {
+    <span class="kw">use crate</span>::<span class="kw-2">*</span>;
+
+    <span class="kw">mod </span>coverage {
+        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+        <span class="attr">#[test]
+        </span><span class="kw">fn </span>slot_storage_drop() {
+            <span class="kw">let </span>kind = SlotStorageKind::Drop;
+            <span class="kw">let </span>storage = SlotStorage::&lt;()&gt;::new(kind);
+            drop(storage);
+        }
     }
 }
 </code></pre></div></section></main></body></html>

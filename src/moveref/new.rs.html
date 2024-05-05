@@ -153,6 +153,8 @@
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{mem::MaybeUninit, pin::Pin};
 
 <span class="kw">use crate</span>::{into_move::IntoMove, move_ref::MoveRef};
@@ -192,8 +194,8 @@
 
     <span class="kw">unsafe fn </span>try_new(<span class="self">self</span>, this: Pin&lt;<span class="kw-2">&amp;mut </span>MaybeUninit&lt;<span class="self">Self</span>::Output&gt;&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
         <span class="self">self</span>.new(this);
-        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-    }
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(()); <span class="comment">// tarpaulin
+    </span>}
 }
 
 <span class="attr">#[allow(clippy::module_name_repetitions)]
@@ -225,21 +227,22 @@
         _type: core::marker::PhantomData&lt;<span class="kw">fn</span>(Pin&lt;<span class="kw-2">&amp;mut </span>MaybeUninit&lt;T&gt;&gt;)&gt;,
     }
 
-    <span class="kw">impl</span>&lt;F, T&gt; New <span class="kw">for </span>FnNew&lt;F, T&gt;
-    <span class="kw">where
+    <span class="attr">#[rustfmt::skip]
+    </span><span class="kw">impl</span>&lt;F, T&gt; New <span class="kw">for </span>FnNew&lt;F, T&gt; <span class="comment">// tarpaulin
+    </span><span class="kw">where
         </span>F: FnOnce(Pin&lt;<span class="kw-2">&amp;mut </span>MaybeUninit&lt;T&gt;&gt;),
     {
-        <span class="kw">type </span>Output = T;
-        <span class="attr">#[inline]
+        <span class="kw">type </span>Output = T; <span class="comment">// tarpaulin
+        </span><span class="attr">#[inline]
         </span><span class="kw">unsafe fn </span>new(<span class="self">self</span>, this: Pin&lt;<span class="kw-2">&amp;mut </span>MaybeUninit&lt;<span class="self">Self</span>::Output&gt;&gt;) {
             (<span class="self">self</span>.initializer)(this);
         }
     }
 
     <span class="kw">return </span>FnNew {
-        initializer,
-        _type: core::marker::PhantomData,
-    };
+        initializer,                      <span class="comment">// tarpaulin
+        </span>_type: core::marker::PhantomData, <span class="comment">// tarpaulin
+    </span>};
 }
 
 <span class="attr">#[inline]
@@ -268,14 +271,15 @@
     P::Target: MoveNew,
 {
     <span class="kw">unsafe </span>{
-        <span class="kw">return </span>by_raw(<span class="kw">move </span>|dst| {
-            <span class="macro">bind_slot!</span>(
-                <span class="attr">#[dropping]
-                </span>storage
-            );
-            <span class="kw">let </span>src = ptr.into_move(storage);
-            MoveNew::move_new(src, dst);
-        });
+        <span class="attr">#[rustfmt::skip] </span><span class="comment">// tarpaulin
+        </span><span class="kw">return </span>by_raw(<span class="kw">move </span>|dst| {
+            <span class="macro">bind_slot!</span>(      <span class="comment">// tarpaulin
+                </span><span class="attr">#[dropping]  </span><span class="comment">// tarpaulin
+                </span>storage      <span class="comment">// tarpaulin
+            </span>);
+            <span class="kw">let </span>src = ptr.into_move(storage); <span class="comment">// tarpaulin
+            </span>MoveNew::move_new(src, dst);      <span class="comment">// tarpaulin
+        </span>});
     }
 }
 

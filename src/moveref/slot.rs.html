@@ -100,8 +100,8 @@
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>put(<span class="self">self</span>, val: T) -&gt; MoveRef&lt;<span class="lifetime">'frame</span>, T&gt; {
         <span class="kw">let </span>pin = <span class="self">self</span>.pin(val);
-        <span class="kw">return unsafe </span>{ Pin::into_inner_unchecked(pin) };
-    }
+        <span class="kw">return unsafe </span>{ Pin::into_inner_unchecked(pin) }; <span class="comment">// tarpaulin
+    </span>}
 
     <span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write(<span class="self">self</span>, val: T) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">'frame </span><span class="kw-2">mut </span>T, SlotStorageStatus&lt;<span class="lifetime">'frame</span>&gt;) {

@@ -104,13 +104,6 @@
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{mem::MaybeUninit, ops::Deref, pin::Pin};
 
 <span class="kw">use crate</span>::{deref_move::DerefMove, move_ref::MoveRef, slot::Slot};
@@ -174,54 +167,47 @@
     }
 }
 
-<span class="doccomment">/// # Safety
-///
-/// Implementers must ensure that the pointer returned by
-/// `allocate_uninitialized_cxx_storage` is a valid, non-null,
-/// pointer to a new but uninitialized storage block, and that
-/// such blocks must be freeable using either of these routes:
-///
-/// - before they're initialized, using `free_uninitialized_cxx_storage`
-/// - after they're initialized, via a delete expression like `delete p;`
-</span><span class="attr">#[cfg(feature = <span class="string">"cxx"</span>)]
-</span><span class="kw">pub unsafe trait </span>CxxUniquePtrAllocate {
-    <span class="kw">unsafe fn </span>allocate_uninitialized_cxx_storage() -&gt; <span class="kw-2">*mut </span><span class="self">Self</span>;
-    <span class="kw">unsafe fn </span>free_uninitialized_cxx_storage(ptr: <span class="kw-2">*mut </span><span class="self">Self</span>);
-}
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use crate</span>::<span class="kw-2">*</span>;
 
-<span class="attr">#[cfg(feature = <span class="string">"cxx"</span>)]
-</span><span class="kw">pub struct </span>CxxUniquePtrStorage&lt;T: CxxUniquePtrAllocate&gt;(<span class="kw-2">*mut </span>T);
+    <span class="kw">mod </span>coverage {
+        <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-<span class="attr">#[cfg(feature = <span class="string">"cxx"</span>)]
-</span><span class="kw">impl</span>&lt;T&gt; CxxUniquePtrStorage&lt;T&gt;
-<span class="kw">where
-    </span>T: CxxUniquePtrAllocate,
-{
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>assume_init_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>T {
-        <span class="kw">return unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.<span class="number">0 </span>};
-    }
-}
+        <span class="kw">mod </span>into_move {
+            <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-<span class="attr">#[cfg(feature = <span class="string">"cxx"</span>)]
-</span><span class="kw">impl</span>&lt;T&gt; IntoMove <span class="kw">for </span>cxx::UniquePtr&lt;T&gt;
-<span class="kw">where
-    </span>T: CxxUniquePtrAllocate,
-    T: cxx::memory::UniquePtrTarget,
-{
-    <span class="kw">type </span>Storage = CxxUniquePtrStorage&lt;T&gt;;
+            <span class="kw">const </span>VAL: <span class="kw-2">&amp;</span>str = <span class="string">"value"</span>;
 
-    <span class="kw">fn </span>into_move&lt;<span class="lifetime">'frame</span>&gt;(
-        <span class="self">self</span>,
-        storage: Slot&lt;<span class="lifetime">'frame</span>, <span class="self">Self</span>::Storage&gt;,
-    ) -&gt; Pin&lt;MoveRef&lt;<span class="lifetime">'frame</span>, <span class="self">Self</span>::Target&gt;&gt;
-    <span class="kw">where
-        </span><span class="self">Self</span>: <span class="lifetime">'frame</span>,
-    {
-        <span class="kw">let </span>cast = CxxUniquePtrStorage(<span class="self">self</span>.into_raw());
-        <span class="kw">let </span>(ptr, status) = storage.write(cast);
-        <span class="kw">let </span>this = <span class="kw">unsafe </span>{ MoveRef::new_unchecked(ptr.assume_init_mut(), status) };
-        <span class="kw">return </span>MoveRef::into_pin(this);
+            <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+            #[test]
+            </span><span class="kw">fn </span>r#box() {
+                <span class="kw">let </span>kind = SlotStorageKind::Drop;
+                <span class="kw">let </span><span class="kw-2">mut </span>storage = SlotStorage::new(kind);
+                <span class="kw">let </span>slot = storage.slot();
+                <span class="kw">let </span>mref = IntoMove::into_move(Box::new(VAL), slot);
+                <span class="macro">assert_eq!</span>(VAL, <span class="kw-2">*</span>mref);
+            }
+
+            <span class="attr">#[test]
+            </span><span class="kw">fn </span>move_ref() {
+                <span class="kw">let </span>kind = SlotStorageKind::Drop;
+                <span class="kw">let </span><span class="kw-2">mut </span>storage = SlotStorage::new(kind);
+                <span class="kw">let </span>slot = storage.slot();
+                <span class="macro">bind!</span>(val: MoveRef&lt;<span class="kw-2">&amp;</span>str&gt; = <span class="kw-2">&amp;</span><span class="kw">move </span>VAL);
+                <span class="kw">let </span>mref = IntoMove::into_move(val, slot);
+                <span class="macro">assert_eq!</span>(VAL, <span class="kw-2">*</span>mref);
+            }
+
+            <span class="attr">#[test]
+            </span><span class="kw">fn </span>pin() {
+                <span class="kw">let </span>kind = SlotStorageKind::Drop;
+                <span class="kw">let </span><span class="kw-2">mut </span>storage = SlotStorage::new(kind);
+                <span class="kw">let </span>slot = storage.slot();
+                <span class="kw">let </span>mref = IntoMove::into_move(Box::pin(VAL), slot);
+                <span class="macro">assert_eq!</span>(VAL, <span class="kw-2">*</span>mref);
+            }
+        }
     }
 }
 </code></pre></div></section></main></body></html>

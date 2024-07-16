@@ -7,7 +7,7 @@ license = "Apache-2.0 WITH LLVM-exception"
 repository = "https://github.com/silvanshade/moveref"
 documentation = "https://silvanshade.github.io/moveref/moveref"
 description = "Types and traits for safe C++ style placement initialization and move semantics"
-categories = ["api-bindings", "compilers", "external-ffi-bindings", "memory-management", "no-std", "rust-patterns"]
+categories = ["compilers", "external-ffi-bindings", "memory-management", "no-std", "rust-patterns"]
 keywords = ["C++", "allocation", "ffi", "memory", "references"]
 
 [features]
